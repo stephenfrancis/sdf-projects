@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>Mancala</title>
+		<style type="text/css">
+#MancalaBoard {
+	table-layout: separate;
+}
+#MancalaBoard > tbody > tr > td		{
+			margin: 5px 10px;
+			border: 1px solid black;
+			border-radius: 10px;
+			padding: 5px 10px;
+}
+#MancalaBoard > tbody > tr > td.ActiveA {
+	background-color: LightGreen;
+	cursor: pointer;
+}
+#MancalaBoard > tbody > tr > td.ActiveB {
+	background-color: LightBlue;
+	cursor: pointer;
+}
+
+		</style>
+		<script type="text/javascript" src="/rsl_shared/style/jquery.ui/js/jquery-1.7.2.min.js"> </script>								
+		<script>
+			x = {
+				cell: [],			// number of counters in each cell
+				turn: "A",			// player whose turn it is now
+				belongs: [ "-", "A", "A", "A", "A", "A", "A", "A", "A", "-", "B", "B", "B", "B", "B", "B", "B", "B" ]
+			}
+			$(document).ready(function() {
+				setup();
+				drawBoard();
+			});
+
+			function setup() {
+				var i;
+				for (i = 0; i < 18; i += 1) {
+					x.cell[i] = (i % 9 === 0) ? 0 : 4;
+					$("#cell_" + i).data("index", i);
+					$("#cell_" + i).click(clickCell);
+				}
+			}					
+
+			function drawBoard(message) {
+				var i,
+					active = 0;
+				for (i = 0; i < 18; i += 1) {
+					$("#cell_" + i).text(x.cell[i]);
+					$("#cell_" + i).removeClass("ActiveA");
+					$("#cell_" + i).removeClass("ActiveB");
+					if (x.belongs[i] === x.turn && x.cell[i] > 0) {
+						$("#cell_" + i).addClass("Active" + x.turn);
+						active += x.cell[i];
+					}
+				}
+				if (active === 0) {
+					message = "Game ends, " +
+						(x.cell[0] > x.cell[9] ? "winner is A" : x.cell[0] < x.cell[9] ? "winner is B" : "draw");
+				} else if (!message) {
+					message = "Player " + x.turn + "'s turn";
+				}
+				$("p#Message").text(message);
+			}
+
+			function clickCell(event) {
+				var index = $(event.target).data("index"),
+					remain = x.cell[index],
+					own_mancala = (x.turn === "A") ? 9 : 0,
+					oth_mancala = (x.turn === "A") ? 0 : 9,
+					cell_prev_content,
+					message;
+
+				if (x.belongs[index] !== x.turn || remain === 0) {		// not a valid cell
+					return;
+				}
+				x.cell[index] = 0;
+				while (remain > 0) {
+					index += 1;
+					if (index > 17) {
+						index = 0;
+					}
+					if (index === oth_mancala) {			// skip opponent's Mancala
+						index += 1;
+					}
+					cell_prev_content = x.cell[index];
+					x.cell[index] += 1;
+					remain -= 1;
+				}
+				if (cell_prev_content === 0 && x.belongs[index] === x.turn) {
+					x.cell[own_mancala] += x.cell[index];
+					x.cell[index] = 0;
+					x.cell[own_mancala] += x.cell[18 - index];
+					x.cell[18 - index] = 0;
+					message = "Player " + x.turn + " wins pieces!";
+				}
+				if (index === own_mancala) {
+					message = "Player " + x.turn + " gets another go!";
+				} else {
+					x.turn = (x.turn === "A") ? "B" : "A";
+				}
+				drawBoard(message);
+			}
+
+
+		</script>
+	</head>
+	<body>
+		<h1>Mancala</h1>
+		<table id="MancalaBoard">
+			<tr>
+				<td id="cell_0" rowspan="2"></td>
+				<td id="cell_1"></td>
+				<td id="cell_2"></td>
+				<td id="cell_3"></td>
+				<td id="cell_4"></td>
+				<td id="cell_5"></td>
+				<td id="cell_6"></td>
+				<td id="cell_7"></td>
+				<td id="cell_8"></td>
+				<td id="cell_9" rowspan="2"></td>
+			</tr>
+			<tr>
+				<td id="cell_17"></td>
+				<td id="cell_16"></td>
+				<td id="cell_15"></td>
+				<td id="cell_14"></td>
+				<td id="cell_13"></td>
+				<td id="cell_12"></td>
+				<td id="cell_11"></td>
+				<td id="cell_10"></td>
+			</tr>
+		</table>
+		<p id="Message"></p>
+	</body>
+</html>

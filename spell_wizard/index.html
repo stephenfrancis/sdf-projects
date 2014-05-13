@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>Spell Wizard</title>
+		<script type="text/javascript" src="/rsl_shared/style/jquery.ui/js/jquery-1.7.2.min.js"> </script>								
+		<script>
+			x = {
+				test: 6			// 6-letter words
+			}
+			$(document).ready(function() {
+				loadWordlist();
+				$(":input#response").blur(function() {
+					checkWord($(this).val());
+				});
+				document.onkeyup = function(evt) {
+					var evt = (evt) ? evt : ((event) ? event : null);
+					var node = (evt.target) ? evt.target : ( (evt.srcElement) ? evt.srcElement : null );
+					if (evt.keyCode === 13) {
+						checkWord($(":input#response").val());
+					}
+				}
+			});
+
+			function loadWordlist() {
+				$.ajax({ url:"wordlists/words" + x.test + ".txt", type: "GET",
+					success: function(data_back) {
+						x.words = data_back.split(/\r\n/);
+						startTest();
+					}
+				});
+			}					
+
+			function startTest() {
+				x.score     = 0;
+				x.questions = 10;
+				x.question  = 0;
+				x.attempted = 0;
+				nextQuestion();
+			}
+
+			function updateScoreboard() {
+				$("td#info_test"    ).text(x.test     + " Letter Words");
+				$("td#info_question").text(x.question + " of " + x.questions);
+				$("td#info_score"   ).text(x.score    + " of " + x.attempted);
+			}
+	
+			function nextQuestion() {
+				x.question  += 1;
+				updateScoreboard();
+				x.current_word = x.words.splice(Math.floor(Math.random() * x.words.length), 1);
+				$("div#main_word").text(x.current_word);
+				$(":input#response").val("");
+				$(":input#response").focus();
+			}
+			
+			function checkWord(attempt) {
+				if (!x.current_word) {
+					return;					// no word in play
+				}
+//				target = target + "";
+				$("td#info_message").text(x.current_word + ": " + (typeof x.current_word) + " -- " + attempt + ": " + (typeof attempt) );
+				if (attempt == x.current_word) {
+					x.score += 1;
+					$("td#info_message").text("Correct!");
+				} else {
+					$("td#info_message").text("Nah");
+				}
+				x.attempted += 1;
+				if (x.attempted < x.questions) {
+					nextQuestion();
+				} else {
+					updateScoreboard();
+					$("td#info_message").text("Test completed");
+				}
+			}
+		</script>
+	</head>
+	<body>
+		<h1>Spell Wizard</h1>
+		<table>
+			<tr><td>Test		</td><td id="info_test"		></td></tr>
+			<tr><td>Question	</td><td id="info_question"	></td></tr>
+			<tr><td>Score		</td><td id="info_score"	></td></tr>
+			<tr><td id="info_message"></td></tr>
+		</table>
+		<div id="main_word"></div>
+		<input id="response"></input>
+	</body>
+</html>
