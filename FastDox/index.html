@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en"><!--  manifest="cache.manifest" -->
+	<head>
+		<title>FastDox</title>
+		<meta charset="utf-8">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+		<meta name="description" content="">
+		<meta name="author" content="">
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8" /> 
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+		<link rel="stylesheet" type="text/css" href="/rsl_shared/style/bootstrap-3.1.1-dist/css/bootstrap.min.css" media="screen" />
+		<link rel="stylesheet" type="text/css" href="/rsl_shared/style/alohaeditor-0.25.2/aloha/css/aloha.css" />
+		<style type="text/css">
+body						{ font-family: Arial; }
+.css_hide					{ display: none; }
+/*
+#css_message				{ margin-top: 6px; float: right; margin-right: 10px; text-align: right; }
+#buttons					{ margin-top: 6px; float: right; margin-right: 10px; text-align: right; width: 180px; }
+*/
+a#status					{ font-size: 16pt; text-decoration: none; cursor: default; }
+a#status.online				{ color: green; }
+a#status.offline			{ color: red; }
+a#status.replicating		{ color: blue; }
+
+#index_area tr[docKey]		{ cursor: pointer; }
+#index_area th.sel			{ width: 20px; }
+#index_area td.sel > span.glyphicon				{ display: none; }
+#index_area td.doc_info		{ /*display: none;*/ font-size: x-small; color: gray; }
+#index_area tr.info > td.sel > span.glyphicon	{ display: inline-block; }
+#index_area tr > th:nth-child(2)	{ max-width: 200px; }
+#index_area tr > td:nth-child(2)	{ max-width: 200px; }
+
+#edit_area #doc_content		{
+								background-color: #FFFFFF; border: 1px solid black;
+								box-shadow: 0 1px 1px rgba(0, 0, 0, 0.075) inset;
+								transition: border 0.2s linear 0s, box-shadow 0.2s linear 0s;
+								padding: 4px;
+							}
+
+		</style>
+	</head>
+	<body class="container-fluid" style="padding-top: 50px">
+		<nav class="navbar navbar-fixed-top navbar-inverse" role="navigation">
+			<div class="container-fluid">
+				<div class="navbar-header">
+					<button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#fastdox-navbar-collapse">
+						<span class="sr-only">Toggle navigation</span>
+						<span class="icon-bar"></span>
+						<span class="icon-bar"></span>
+						<span class="icon-bar"></span>
+					</button>
+					<a class="navbar-brand" href="#">FastDox</a>
+				</div>
+	
+				<div class="collapse navbar-collapse" id="fastdox-navbar-collapse">
+					<ul class="nav navbar-nav">
+						<li id="menu_index" ><a href="#">Index</a></li>
+						<li id="menu_create"><a href="#">Create</a></li>
+						<li id="menu_delete"><a href="#">Delete</a></li>
+						<li id="menu_forget"><a href="#">Forget Local Changes</a></li>
+					</ul>
+					<ul class="nav navbar-nav pull-right">
+						<li id="css_message" class="navbar-text">starting</li>
+						<li><a id="status">&#x25CF;</a></li>
+					</ul>
+				</div>
+			</div>
+		</nav>
+		<div id="view_area" class="css_hide">
+			<div id="doc_content"></div>
+			<br/>
+			<button id="doc_edit"   class="btn btn-small btn-primary">Edit</button>
+		</div>
+		<div id="edit_area" class="css_hide">
+			<h1><input id="doc_title" size="50" type="text"/></h1>
+			<div id="doc_content" contenteditable="true"></div>
+			<br/>
+			<button id="doc_save"   class="btn btn-small btn-primary">Save</button>
+			<button id="doc_cancel" class="btn btn-small"            >Cancel</button>
+		</div>
+		<div id="index_area" class="css_hide">
+			<h1>Index</h1>
+			<table class="table table-condensed table-hover table-striped table-responsive">
+				<thead>
+					<tr>
+						<th class='sel'><span class='glyphicon glyphicon-ok'></span></th>
+						<th>Title / Content</th>
+						<th>Status</th>
+						<th>Info</th>
+					</tr>
+				</thead>
+				<tbody>
+				</tbody>
+			</table>
+		</div>
+<!--
+		<script type="text/javascript" src="/rsl_shared/style/jquery.core/jquery-1.11.0.min.js"></script>
+-->
+		<script type="text/javascript" src="/rsl_shared/style/jquery.ui/js/jquery-1.7.2.min.js"></script>
+		<script type="text/javascript" src="/rsl_shared/style/bootstrap-3.1.1-dist/js/bootstrap.min.js"></script>
+		<script type="text/javascript" src="cli_js/uuid.core.js"></script>
+		<script type="text/javascript" src="cli_js/master.js"></script>
+
+		<script type="text/javascript">
+			$(document).ready(function() {
+				y.startApp(y.start);
+		        var textarea = $("#edit_area #doc_content");
+			    Aloha.ready(function() {
+			        Aloha.jQuery(textarea).aloha();
+			    });
+			});
+			$(document).on("click", "#menu_create", function(event) {
+				y.renderCreate();
+			});
+			$(document).on("click", "#menu_index" , function(event) {
+				y.renderIndex();
+			});
+			$(document).on("click", "#menu_forget", function(event) {
+		        var count = 0,
+		        	okay = confirm("Forget local changes of selected docs?");
+		        if (!okay) {
+		        	return;
+		        }
+		        $("tr.info").each(function () {
+		        	y.getDoc($(this).attr("docKey"), function (doc_obj) {
+		       	 		count += (y.forgetLocalChanges(doc_obj) ? 1 : 0);
+		            });
+		        });
+		        alert(count + " conflict documents reverted");
+			});
+			$(document).on("click", "#doc_edit"   , function(event) {
+				y.renderEdit();
+			});
+			$(document).on("click", "#doc_save"   , function(event) {
+				y.saveDoc();
+			});
+			$(document).on("click", "#doc_cancel" , function(event) {
+				if (y.current_doc) {
+					y.renderView();
+				} else {				// cancelling from Create...
+					y.renderIndex();
+				}
+			});
+
+// Multi-row Selection
+			$(document).on("mousedown", "td.sel"  , function(event) {
+				y.mouse_down     = true;
+				y.mouse_deselect = $(this).parent().hasClass("info");
+				mouseoverRow(this);
+				return false;
+			});
+			$(document).on("mouseover", "td.sel"  , function(event) {
+				if (y.mouse_down) {
+					mouseoverRow(this);
+				}
+			});
+			$(document).on("mouseup"              , function(event) {
+				var count_selected = $("#index_area > table > tbody > tr.info").length;
+				if (count_selected === 0) {
+			        $("#menu_delete").   addClass("disabled");
+			        $("#menu_forget").   addClass("disabled");
+				} else {
+			        $("#menu_delete").removeClass("disabled");
+			        $("#menu_forget").removeClass("disabled");
+				}
+				y.mouse_down = false;
+			});
+			function mouseoverRow(row) {
+				if (y.mouse_deselect) {
+					$(row).parent().removeClass("info");
+				} else {
+					$(row).parent().   addClass("info");
+				}
+			}
+			$(document).on("click", "td.sel"     , function(event) {
+				return false;
+			});
+			$(document).on("click", "tr[docKey]" , function(event) {
+				y.renderView($(this).attr("docKey"));
+			});
+//			$(document).on("hover", "tr"         , function(event) {
+//				alert("hover on tr");
+//			});
+
+	        Aloha = window.Aloha || {};
+	        Aloha.settings = Aloha.settings || {};
+	        Aloha.settings.locale = 'en';
+	        Aloha.settings.sidebar = { disabled: true };
+	        // Restore the global $ and jQuery variables of your project's jQuery
+	        Aloha.settings.jQuery = window.jQuery.noConflict(true);
+	        Aloha.settings.plugins = {
+	            load: "common/ui, common/format, common/list, common/link, common/paste, common/table, common/contenthandler"
+	        };
+	        Aloha.settings.contentHandler = {
+	            insertHtml: [ 'word', 'generic', 'oembed', 'sanitize' ],
+	            initEditable: [ 'sanitize' ],
+	            getContents: [ 'blockelement', 'sanitize', 'basic' ],
+	            sanitize: 'relaxed' // relaxed, restricted, basic,
+	        };
+			
+		</script>
+		<script type="text/javascript" src="/rsl_shared/style/alohaeditor-0.25.2/aloha/lib/require.js"> </script>
+		<script type="text/javascript" src="/rsl_shared/style/alohaeditor-0.25.2/aloha/lib/aloha-full.min.js"> </script>
+	</body>
+</html>

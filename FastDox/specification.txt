@@ -1,0 +1,142 @@
+
+	Specification
+	-------------
+
+
+	Replication Mechanism
+
+		Use Cases
+		
+			1. New doc created locally. Pushed to server at next opportunity. Must have unique key. 
+				So each client must be given unique client id before new doc can be created. Repl status: Local Only -> Up-to-date
+			2. Doc listed as available on server but not local. Repl status: Server Only
+			3. Doc accessed from server. Repl status: Up-to-date
+			4. Doc updated locally. Pushed to server at next opportunity. Repl status: Local Change -> Up-to-date
+			5. Doc updated remotely. Pulled from server at next opportunity. Repl status: Server Change -> Up-to-date
+			6. Doc updated locally and remotely before chance to sync. Repl status: Conflict
+			7. User updates locally (based on diff view?) and confirms conflict resolution, pushed to server. Repl status: Up-to-date
+		
+		Principles
+		
+			A. As much is stored locally as there is local storage available
+			B. Once local storage is (nearly) consumed, user can choose which docs have priority to be kept locally
+				Options: Docs I - created, starred, edited, viewed, at all or most recently
+			C. Every doc that exists on the server is given a server version number, and the server will only accept an update from
+				a client for that doc if it is supplied with a matching server version number, which is then incremented
+
+
+
+		Algorithm
+		
+			loop
+				if I reach the server then
+					loop over docs that are locally modified
+						push each modified doc to the server, and mark each up-to-date when confirmed received okay from the server
+					request list of docs created/changed since last replication time (all? or give list of local docs?, or servers keeps record of docs I have?)
+					loop over docs we need to get updates for
+						pull each doc from the server, and mark each up-to-date when received
+					what about docs deleted from the server?
+					update last replicated time
+				wait for an interval
+
+
+
+	pushing updates:
+		supply server version number if not a new doc, response might be: 200 (OK, stored), xxx (incorrect version -> conflict)
+
+			
+
+	y.saveDoc()
+		if doc has no repl_status set it to "Local Only"
+		else if repl_status is "Up-to-date" set it to "Local Change"
+		else if repl_status is "Local Change" leave it as-is
+		else set it to "Conflict"
+
+
+	y.start()
+		y.renderIndex()
+		y.replicate()
+
+
+	y.replicate() - initiate a replication process
+		this_replication = new Date object representing current replication process
+		y.getCollectionProperties(this_replication)
+
+	y.getCollectionProperties(this_replication) - get server properties for the collection
+		ajax http PROPFIND (all properties of all documents in collection), if success:
+			y.processCollection(xml_response, this_replication)
+			y.replicateLocalChanges(this_replication)
+
+	y.processCollection(xml_response, this_replication)
+		loop over XML elements representing each document:
+			y.processResponse(xml_element, this_replication)
+
+	y.processResponse(xml_element, this_replication)
+		retrieve corresponding local doc based on uuid
+		if found:
+			if local and server etags don't match:
+				if repl_status is "Up-to-date" change it to "Server Change"
+				else if repl_status is "Server Only" or "Server Change" leave it as-is
+				else set repl_status to "Conflict"
+				store server_etag, server_last_modified, server_length
+		else:
+			store new doc, with repl_status of "Server Only"
+		store server_last_repl = this_replication
+
+	y.replicateLocalChanges(this_replication)
+		loop over local documents:
+			y.replicateDoc(doc_obj, this_replication)
+
+	y.replicateDoc(doc_obj, this_replication)
+		if doc has no repl_status OR repl_status is "Local Only" or "Local Change"
+			y.pushToServer(doc_obj, this_replication)
+		else if repl_status is "Up-to-date" or "Server Change"
+			do nothing
+		else if repl_status is "Server Only" or "Conflict"
+			do nothing
+
+	y.pushToServer(doc_obj, this_replication)
+		ajax http PUT doc content, if success
+			ajax http HEAD to retrieve headers Etag, Last-Modified, Content-Length
+
+
+	y.checkServer -- NOT USED?
+		ajax http HEAD
+		retrieve headers Etag, Last-Modified, Content-Length
+		update repl_status based on comparing Etag with local
+
+
+	y.getDocFromServer(doc_obj)
+		ajax http GET, if success
+			update local content and headers
+			
+
+	y.getCollectionProperties()
+			y.processCollection(xml_doc)
+			
+
+	y.processCollection(xml_doc)
+		loop over doc responses, for each
+			y.processResponse(xml_element)
+
+
+	y.replicationLoop()
+		setTimeout(y.replicate, y.replication_interval)
+
+
+
+Proposed:
+
+	y.updateReplStatus(doc_obj, action) action being one of "Local Change", "Synced", "Server Change"
+		if action is "Local Save"
+			if doc has no repl_status set it to "Local Only"
+			else if repl_status is "Up-to-date" set it to "Local Change"
+			else if repl_status is "Local Change" leave it as-is
+			else set it to "Conflict"
+		else if action is "Pushed"
+			set repl_status to "Up-to-date"
+		else if action is "Server Change"
+			if repl_status is "Up-to-date" change it to "Server Change"
+			else if repl_status is "Server Only" or "Server Change" leave it as-is
+			else set repl_status to "Conflict"
+			

@@ -1,0 +1,14 @@
+CACHE MANIFEST
+CACHE:
+index.html
+cli_js/uuid.core.js
+cli_js/master.js
+/rsl_shared/style/jquery.ui/js/jquery-1.7.2.min.js
+/rsl_shared/style/bootstrap-3.1.1-dist/css/bootstrap.min.css
+/rsl_shared/style/bootstrap-3.1.1-dist/js/bootstrap.min.js
+/rsl_shared/style/bootstrap-3.1.1-dist/fonts/glyphicons-halflings-regular.woff
+/rsl_shared/style/bootstrap-3.1.1-dist/fonts/glyphicons-halflings-regular.ttf
+/rsl_shared/style/bootstrap-3.1.1-dist/fonts/glyphicons-halflings-regular.svg
+/rsl_shared/style/alohaeditor-0.25.2/aloha/css/aloha.css
+/rsl_shared/style/alohaeditor-0.25.2/aloha/lib/require.js
+/rsl_shared/style/alohaeditor-0.25.2/aloha/lib/aloha-full.min.js
