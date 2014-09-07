@@ -1,0 +1,19 @@
+
+	Twitter-Bootstrap Customisation Settings Used
+	
+Scaffolding
+	@textColor			#535E68
+Links
+	@linkColor			#014493
+Colors
+Sprites
+Grid System
+Typography
+	@baseFontSize		10pt
+Tables
+Forms
+Form States & Alerts
+Navbar
+	@navbarBackground	@white
+	@navbarLinkColor	@linkColor
+Dropdowns

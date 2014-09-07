@@ -1,0 +1,170 @@
+
+
+
+/* Sections */
+section						{ margin-bottom: 60px; }	/* not used yet */
+.css_section_text			{ margin-bottom: 10px; }
+.css_section				{ margin-bottom: 20px; }
+
+.css_section_FormRepeat .css_form_body	{ margin-top: 40px; margin-bottom: 20px; border-bottom: 1px solid #EEEEEE; }
+.css_form_body.fluid .css_label	{ font-size: 8pt; color: gray; }
+.css_form_body.fluid .css_disp	{ display: block; font-size: 10pt; overflow-wrap: break-word; }
+.css_form_body.fluid .row-fluid { margin-bottom: 15px; }
+
+/* Hierarchy Sections */
+div.css_section_Hierarchy li > div	{ display: inline; }
+div.css_section_Hierarchy td { min-width: 20px; padding-right: 10px; }
+div.css_section_Hierarchy ul { list-style-type: none; }
+div.css_section_Hierarchy ul > li > a.css_hier_ctrl	{ cursor: pointer; }
+div.css_section_Hierarchy ul > li.css_expanded   > a.css_hier_ctrl:before		{ content: "\2212"; }
+div.css_section_Hierarchy ul > li.css_contracted > a.css_hier_ctrl:before		{ content: "\002B"; }
+div.css_section_Hierarchy ul > li.css_contracted > ul		{ display: none; }
+
+table.css_tree_table_layout a.css_hier_ctrl	{ cursor: pointer; }
+table.css_tree_table_layout tr.css_expanded   > td > a.css_hier_ctrl:before		{ content: "\2212"; }
+table.css_tree_table_layout tr.css_contracted > td > a.css_hier_ctrl:before		{ content: "\2212"; }
+
+div.css_section_SkillsTree li { height: 30px; }
+div.css_section_SkillsTree li > div	{ display: inline; position: absolute; left: 650px; }
+div.css_section_SkillsTree label { margin: 0 20px 0 5px; vertical-align: middle; }
+div.css_section_SkillsTree td { min-width: 20px; padding-right: 10px; }
+
+/* Search Sections */
+table.css_search_filters	{ border-collapse: separate; border-spacing: 10px; }
+.css_filter_label			{ font-weight: bold; text-align: right; }
+.css_filter_oper_disp		{ padding-bottom: 6px; }
+div.css_search_control > *	{ margin: 0 10px 10px 0; display: inline; }
+div.css_search_control > button	{ margin-top: 10px; }
+
+/* Tile Sections */
+div.css_section_Tiles input	{ margin-right: 10px; margin-bottom: 10px; }
+div.css_section_Tiles .btn	{ margin-right: 10px; margin-bottom: 10px; }
+.css_tile			{ margin: 10px 0 10px 10px; }
+.css_tile > img		{ margin-right: 4px; }
+.css_tile > div		{ display: inline; }
+.css_tiles_footer	{ clear: left; }
+
+.css_diagram		{ display: inline-block; margin-left: 10px; vertical-align: middle; }
+
+
+/* Forms */
+#css_body select, textarea, 
+input[type="text"], input[type="password"], input[type="datetime"],
+input[type="datetime-local"], input[type="date"], input[type="month"],
+input[type="time"], input[type="week"], input[type="number"],
+input[type="email"], input[type="url"], input[type="search"],
+input[type="tel"], input[type="color"], .uneditable-input { margin-bottom: 0px; }
+.css_align_right input::-ms-clear	{ display: none; }			/* Disable IE clear button ('X') in IE for right aligned inputs */
+input, textarea				{ font-family: "Courier New"; }
+.form-horizontal .control-group		{ margin-bottom: 10px; }
+.form-horizontal .control-label		{ padding-top: 0; }
+div.controls				{ font-weight: bold; }
+div.css_type_datetime > input:first-child { margin-right: 5px; }
+table.multi-column			{ border-collapse: separate; border-spacing: 10px; }
+div.css_type_duration.css_edit > span	{ margin-left: 20px; }
+div.css_type_duration > span > label	{ display: inline-block; margin: 0 20px 0 5px; vertical-align: middle; }
+div.css_type_ganttblock		{ height: 10px; position: relative; background-color: rgb(154, 158, 252); border: 1px solid blue; }
+div.css_richtext.css_edit > div	{
+								background-color: #FFFFFF; border: 1px solid black;
+								box-shadow: 0 1px 1px rgba(0, 0, 0, 0.075) inset;
+								transition: border 0.2s linear 0s, box-shadow 0.2s linear 0s;
+								border-radius: 4px 4px 4px 4px; padding: 4px;
+							}
+div.css_richtext table		{ border-collapse: separate; border-spacing: 2px; }
+/*
+a[rel='tooltip'][title]		{ text-decoration: underline; }		underline tooltips even before hover */
+
+
+/* Lists */
+table.css_list				{ margin-bottom: 0; }
+table.css_list thead th		{ vertical-align: top; }
+.css_list th				{ background:#F0F0F0; }
+.css_list tr[url]			{ cursor: pointer; }
+.table-hover tbody tr[url]:hover td,.table-hover tbody tr:hover th{ background-color: #CACACA/*#D1BCD3*/; }
+tr.css_row_odd				{ background-color: #F8F8F8; }
+tr.css_row_start 			{ background-color: #EEE; }
+tr.css_row_total 			{ background-color: #EEE; }
+/* tr.css_row_total > td 		{ text-align: right; } */
+th.css_level_break_header	{ width: 20px; }
+tr.css_row_hidden			{ display: none; }
+
+.css_right_align_numbers th.css_type_number			{ text-align: right; }
+.css_right_align_numbers td.css_type_number			{ text-align: right; }
+.css_right_align_numbers th.css_align_center		{ text-align: center; }
+.css_right_align_numbers td.css_align_center		{ text-align: center; }
+.css_right_align_numbers th.css_align_right			{ text-align: right; }
+.css_right_align_numbers td.css_align_right			{ text-align: right; }
+.css_right_align_numbers td.css_align_right	input	{ text-align: right; }
+
+/* Adding .controls to the parent div of span.help-inline would negate the need for the code below */
+.css_edit.error .help-inline { color: #b94a48; font-weight: bold; }
+
+.css_uni_icon				{ font-size: 10pt; margin-right: 4px; }
+.css_uni_icon:hover			{ text-decoration: none; color: black; }
+.css_uni_icon_lrg			{ font-size: 12pt; font-weight: bold; margin-right: 4px; }
+.css_uni_icon_lrg:hover		{ text-decoration: none; color: black; }
+.css_uni_icon_off			{ font-size: 10pt; margin-right: 4px; text-decoration: none; }
+.css_uni_icon_off:hover		{ text-decoration: none; }
+
+/* not required any more 
+div.css_list_footer			{ margin-top: 4px; }
+div.css_list_footer > span	{ display: inline-block; background-color: #eee; border: 1px solid #ddd; border-radius: 4px;
+								height: 22px; line-height: 22px; padding-left: 5px; padding-right: 5px; margin-right: 5px; }
+*/
+span.css_list_control		{ display: inline-block; width: 50px; text-align: center; }
+span.css_list_control > a	{ letter-spacing: -3px; }
+td.css_col_control			{ padding: 6px 2px 2px 4px; width: 16px; }
+span.css_list_add > div		{ display: inline; padding-left: 5px; }
+span.css_column_pager		{ float: right; }
+span.css_list_rowcount		{ font-size: x-small; text-align: center; }
+span.css_list_col_chooser 	{ cursor: pointer; float: right; }
+div.css_list_choose_cols	{ margin: 2px; padding: 4px; font-size: smaller; }
+div.css_list_choose_cols > button	{ margin: 0 2px 2px 0 }
+span.css_list_cols_filter > *		{ display: inline; margin-right: 10px; margin-bottom: 2px; height: 12px; line-height: 12px; }
+
+div.modal.fade.in			{ top: 50px; }						/* Modal window disappears on narrow screens */
+.modal-footer				{ line-height: 35px; }				/* space between rows of buttons if they wrap around */
+div.css_test				{ background-image: url(../../rsl_shared/style/icons/test-env-bg.png); background-repeat: repeat-x; }
+
+/* Home Page */
+.css_task_group	> li		{ margin-bottom: 10px; }
+.css_task_group	> li > a	{ margin-left: 20px; }
+.css_task_badge				{ position: absolute; left: 0px; }
+.css_task_badge > div		{ display: block; margin-bottom: 2px; }
+
+
+/*Scroll Pane Sections*/
+.css_scroll					{ overflow-x: auto; overflow-y: visible; }
+.jspDrag					{ background-color: #3E0543; }
+.jspTrack					{ background-color: #54075B; }
+
+/* .css_scroll	 { */
+/*     width: 300px; */
+/*     overflow-x: scroll; */
+/* } */
+.css_scroll	 table {
+    /* just a quick hack to make the table overflow the containing div
+       your method may differ */
+/*     width: 600px; */
+}
+
+.css_scroll	 .table.fixedCol {
+    width: auto;
+    position: absolute;
+    /* below styles are specific for borderd Bootstrap tables
+       to remove rounded corners on cloned table */
+    -webkit-border-top-right-radius: 0px;
+    -webkit-border-bottom-right-radius: 0px;
+       -moz-border-radius-topright: 0px;
+       -moz-border-radius-bottomright: 0px;
+            border-top-right-radius: 0px;
+            border-bottom-right-radius: 0px;
+}
+
+#css_left_bar { height: 90%; }
+
+/* TB Overrides for "Flat Design" */
+.well			{ box-shadow: none; }
+.navbar .nav > .active > a			{ box-shadow: none; }
+.navbar .nav > .active > a:hover	{ box-shadow: none; }
+.navbar .nav > .active > a:focus	{ box-shadow: none; }

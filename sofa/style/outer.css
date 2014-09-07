@@ -1,0 +1,132 @@
+
+/* General TB Overrides (TB = twitter-bootstrap) */
+body						{ padding-top: 60px; }
+h1							{ font-size: 16pt; line-height: 18pt; }
+h2							{ font-size: 14pt; line-height: 16pt; }
+h3							{ font-size: 12pt; }
+h4							{ font-size: 11pt; }
+p							{ line-height: 13pt; }
+p.lead						{ font-size: 11pt; }
+
+#css_body					{ margin-bottom: 50px; }
+.css_body_tabs_above		{ border-width: 0px 1px 1px 1px; border-style: solid; border-color: #DDDDDD; padding: 20px; }
+img							{ vertical-align: middle; border: 0; margin-right: 4px; }
+div.dropdown				{ display: inline; }
+img.ui-datepicker-trigger	{ cursor: pointer; margin-left: 4px; }
+div.css_type_textarea		{
+								/* to work inside tables */ white-space: pre-wrap; /* css-3 */
+								white-space: -moz-pre-wrap; /* Mozilla, since 1999 */   white-space: -pre-wrap; /* Opera 4-6 */
+								white-space: -o-pre-wrap;    /* Opera 7 */              word-wrap: break-word;  /* Internet Explorer 5.5+ */
+							}
+div.controls.css_richtext	{ font-weight: normal; }
+.css_type_horizbuttons label	{ display: inline; margin-left: 5px; margin-right: 10px; }
+
+div.qq-uploader				{ display: inline-block; width: auto; }
+div.qq-upload-button		{ /* this is a straight copy of Twitter-Bootstrap .btn */
+								-moz-border-bottom-colors: none; -moz-border-left-colors: none;
+								-moz-border-right-colors: none; -moz-border-top-colors: none;
+								background-color: #F5F5F5; background-image: linear-gradient(to bottom, #FFFFFF, #E6E6E6);
+								background-repeat: repeat-x;
+								border-color: #BBBBBB #BBBBBB #A2A2A2; border-image: none;
+								border-radius: 4px 4px 4px 4px; border-style: solid; border-width: 1px;
+								box-shadow: 0 1px 0 rgba(255, 255, 255, 0.2) inset, 0 1px 2px rgba(0, 0, 0, 0.05);
+								color: #333333; cursor: pointer; display: inline-block;
+								font-size: 10pt; line-height: 20px;
+								margin-bottom: 0; padding: 4px 12px;
+								text-align: center; text-shadow: 0 1px 1px rgba(255, 255, 255, 0.75);
+								vertical-align: middle; }
+ul.qq-upload-list			{ display: inline-block; margin-left: 10px; }
+ul.qq-upload-list > li		{ border-radius: 5px; padding: 6px; font-weight: normal; font-size: 10pt; }
+ul.qq-upload-list > li a	{ text-decoration: underline; color: black; }
+
+span.css_attr_item			{ display: inline-block; }
+span.css_attr_item > label	{ display: inline; margin-left: 5px; margin-right: 15px; vertical-align: middle; }
+#css_page_tabs				{ margin-bottom: 0; }
+#css_page_tabs > li			{ cursor: pointer; }
+
+.css_page_sections > div	{ vertical-align: top; }
+
+.css_logged_in				{ display: none !important; }
+.css_not_logged_in			{ display: none !important; }
+.css_hide					{ display: none; }
+.css_cmd					{ cursor: pointer; }
+.css_undo_link				{ font-weight: bold; text-decoration: underline; }
+.dropdown-toggle			{ cursor: pointer; }
+
+/*
+div.navbar					{
+								box-shadow: 0px 3px 5px rgba(176,176,176, 1);
+								-webkit-box-shadow: 0px 3px 5px rgba(176,176,176, 1);
+								-moz-box-shadow: 0px 3px 5px rgba(176,176,176, 1);
+							}
+*/
+div.navbar-fixed-top > div.navbar-inner	{
+								padding: 0 20px 0 20px; border: 0; filter: none; /* override MSIE setting in TB */
+								box-shadow: none; background-image: none; min-height: 46px; border-bottom: 1px solid #E3E3E3; }
+div#css_menu_replace		{ display: inline-block; margin-top: 6px; }
+
+/* Left / Top Bars */
+#top_bar					{ margin-top: 40px; }
+#top_bar .btn				{ margin: 0px 4px 4px 0px; }
+#css_top_bar .btn			{ margin-bottom: 5px; margin-right: 4px; }
+
+div#css_top_bar > div#css_login		{ width: auto; min-width: 220px; max-width: 450px; display: block; margin-left: auto; margin-right: auto; }
+#css_login .css_login_fld 	{ display: inline-block; }
+.css_login_fld label 		{ font-weight: bold; }
+.btn-group.css_opt_button   { margin-top: 12px; }
+#css_logout_button			{ margin-left: 5px; }
+#css_navbar_buttons			{ margin-top: 11px; }
+#css_nav_icons				{ position: relative; text-align: right; }
+
+#css_left_bar > .css_page_links	> a	{ text-align: right; padding-right: 10px; }
+
+a#css_env_logo				{ display: block; margin: 20px 0px 20px 0px; }
+a#css_env_logo_mb  			{ display: block; width: 80px; height: 20px;
+								background: url("../../rsl_shared/style/icons/MyRecruiter_logo_MR_sml_white.png") no-repeat center; }
+div.css_main_logo			{
+								border-radius: 10px; text-align: center; padding: 10px; margin-bottom: 20px; 
+								min-width: 130px; /*box-shadow: 0 3px 5px #B0B0B0;*/
+								behavior: url(../../rsl_shared/style/PIE-1.0.0/PIE.htc);
+							}
+div.css_main_logo > a		{ display: inline-block; height: 60px; width: 130px; overflow: hidden; margin-left: 0px; } 
+
+div.css_page_links			{ margin-top: 10px; }
+div.css_messages			{ margin-top: 10px; height: 60%; }
+div.css_messages > div.alert	{ padding: 8px; overflow-wrap: break-word; }
+.messages					{ margin-top: 10px; }
+
+/* Buttons at bottom */
+div.css_page_buttons		{ clear: both; margin-bottom: 20px; }
+div.css_page_buttons > button	{ margin-right: 10px; }
+
+/* Footer */
+footer						{ position: fixed; bottom: 0; width: 100%; margin: 0; font-size: 8pt; font-weight: bold; border-top: 1px solid #E3E3E3;
+							}
+/*
+								box-shadow: 0px -3px 5px rgba(176,176,176, 1);
+								-webkit-box-shadow: 0px -3px 5px rgba(176,176,176, 1);
+								-moz-box-shadow: 0px -3px 5px rgba(176,176,176, 1);
+							}
+*/
+footer > div				{ display: inline-block; width: 33%; }
+footer > div > div			{ padding: 5px; }
+footer > div > div#css_footer_copyright		{ text-align: left;   padding-left: 20px; }
+footer > div > div#css_privacy_msg			{ text-align: center; }
+footer > div > div#css_footer_datetime		{ text-align: right;  padding-right: 20px; }
+
+/* Restores collapsed dropdown menu in mobile view
+div.in li.dropdown ul.dropdown-menu			{ display: none; }
+div.in li.dropdown.open ul.dropdown-menu	{ display: block; }
+
+:first-child.btn-group		{ margin-left: 5px; }
+*/
+
+// Outlining
+/*
+#css_root	{ border: 1px solid red; }
+#css_header	{ border: 1px solid blue; }
+#css_menu_block	{ border: 1px solid brown; }
+#css_ctrl_strip	{ border: 1px solid green; }
+#css_page_strip	{ border: 1px solid orange; }
+#css_footer	{ border: 1px solid green; }
+*/

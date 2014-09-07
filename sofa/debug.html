@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>settee</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+		<meta name="description" content="">
+		<meta name="author" content="">
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+		<link rel="stylesheet" type="text/css" href="twitter_bootstrap/css/bootstrap.min.css" media="screen" />
+		<link rel="stylesheet" type="text/css" href="twitter_bootstrap/css/bootstrap-responsive.min.css" />
+		<link rel="stylesheet" type="text/css" href="style/outer.css"/>
+		<link rel="stylesheet" type="text/css" href="style/content.css"/>
+		<link rel="shortcut icon" href="../rsl_shared/style/icons/Rullion_R_Logo_32x32.png" id="favicon" />
+
+		<!-- HTML5 shim, for IE6-8 support of HTML5 elements -->
+		<!--[if lt IE 9]>
+			<script src="https://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+		<![endif]-->
+	</head>
+
+	<body onunload=""><!-- onunload a fix for a (Firefox?) reload-on-back-button issue -->
+
+		<div id="css_opt_navbar" class="navbar navbar-fixed-top">
+			<div class="navbar-inner">
+				<div class="css_logged_in" id="css_menu_replace"></div>
+				<!-- User Account & Log-out -->
+				
+				<div class="pull-right">		<!-- right-hand buttons/controls -->
+
+					<ul class="nav nav-pills" role="navigation" style="margin-top: 6px">
+						<li class="dropdown">
+							<a id="css_nav_help" role="button" class="dropdown-toggle" data-toggle="dropdown"><b class="caret"></b> Help</a>
+							<ul class="dropdown-menu pull-right" aria-labelledby="css_nav_help">
+							    <li><a id="css_page_helpw" onclick="window.location = (!y.session || (y.session && y.session.is_guest) ? 'guest.html' : 'index.html') + '?page_id=pb_article_show_guest&page_key='+ (y.session && y.session.help_article ? y.session.help_article : (!y.session ||(y.session && y.session.is_guest) ? 'help_guest' : 'help_other'))">Online Help</a></li>
+							    <li><a id="css_page_helpe" href="mailto:rsl.support@rullion.co.uk">Email myRecruiter Support</a></li>
+								<li><a id="css_page_helpt" href="tel:0161 601 3416">Call myRecruiter Support on 0161 601 3416</a></li>	
+							</ul>
+						</li>
+						<li class="dropdown css_logged_in">
+							<a id="css_nav_page" role="button" class="dropdown-toggle" data-toggle="dropdown"><b class="caret"></b> Page</a>
+							<ul class="dropdown-menu pull-right" aria-labelledby="css_nav_page">
+								<li><a target="_blank" id="css_page_print">Printer-Friendly View</a></li>
+								<li><a target="_blank" id="css_page_excel">Export to MS Excel</a></li>
+							</ul>
+						</li>
+						<li class="dropdown css_logged_in">
+							<a id="css_nav_acnt" role="button" class="dropdown-toggle" data-toggle="dropdown"><b class="caret"></b> <span class="css_accnt"></span></a>
+							<ul class="dropdown-menu pull-right" aria-labelledby="css_nav_acnt">
+								<li><a href="index.html?page_id=ac_pswd_change">Change your Password</a></li>
+								<li><a href="index.html?page_id=ac_user_profile_update">Update your Profile</a></li>
+								<li><a href="index.html?page_id=ac_wf_tasks">View your Tasks</a></li>
+							</ul>
+						</li>
+					</ul>
+					<div id="css_logout_button" class="btn-group css_opt_button css_logged_in">
+						<a class="btn btn-small" onclick="y.logout()">Log-out</a>
+					</div>
+
+				</div>
+			</div><!-- /.navbar-inner -->
+		</div><!-- /.navbar -->
+
+		<div class="container-fluid" id="css_content">
+			<div class="row-fluid">
+				<div class="hidden-desktop" id="css_top_bar">
+					<input type="text" class="large css_logged_in css_page_unisrch" placeholder="search" />
+					<div class="css_page_links"> </div>
+					<div class="css_messages"> </div>
+				</div>	<!-- #css_top_bar -->
+			</div>
+
+			<div class="row-fluid">
+				<div class="span2 visible-desktop">
+					<div class="affix span2" id="css_left_bar">
+						<div class="css_main_logo">
+							<a href="?">
+								<img src="style/logo.png" />
+							</a>
+						</div>
+						<div class="css_logged_in">
+							<input type="text" class="css_page_unisrch span12" placeholder="search" />
+						</div>
+						<div class="css_page_links"> </div>
+						<div class="css_messages"> </div>
+					</div>	<!-- #css_left_bar -->
+				</div>	<!-- .visible-desktop -->
+			
+				<div class="span10">
+					<div id="css_nav_icons" class="css_logged_in">
+						<a id="css_nav_prev"  >previous</a>
+						<a id="css_nav_next"  >next</a>
+						<a id="css_nav_search">search</a>
+					</div>
+					<div class="page-header">
+						<h1>
+							<span id="css_page_header_title"></span>
+						</h1>
+						<p id="css_page_header_descr" class="lead"></p>
+					</div>
+
+					<ul id="css_page_tabs" class="nav nav-tabs css_hide">
+					</ul>
+
+					<div id="css_body">
+						Loading...
+					</div>	<!-- #css_body -->
+
+				</div>	<!-- .span10 -->
+
+			</div>	<!-- .row-fluid -->
+		</div>	<!-- .container-fluid -->
+
+	 	<footer class="hidden-phone">
+			<div>
+				<div id="css_footer_copyright">&#169; 2009-14 Rullion Solutions Ltd</div>
+			</div>
+			<div>
+				<div id="css_privacy_msg"     ><a href="guest.html?page_id=privacy">Accessibility, Privacy and Cookies</a></div>
+			</div>
+			<div>
+				<div id="css_footer_datetime" ></div>
+			</div>
+		</footer>
+		<div class="visible-phone">
+			<div>
+				<div id="css_footer_copyright">&#169; 2009-14 Rullion Solutions Ltd</div>
+			</div>
+			<div>
+				<div id="css_privacy_msg"     ><a href="guest.html?page_id=privacy">Accessibility, Privacy and Cookies</a></div>
+			</div>
+			<div>
+				<div id="css_footer_datetime" ></div>
+			</div>
+		</div>
+
+		<div id="css_modal" class="modal hide fade" tabindex="-1" role="dialog" aria-labelledby="css_modal_label" aria-hidden="true">
+			<div class="modal-header">
+				<button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+				<h3 id="css_modal_label">Modal header</h3>
+			</div>
+			<div class="modal-messages">
+			</div>
+			<div class="modal-body">
+			</div>
+			<div class="modal-footer">
+			</div>
+		</div>
+
+		<script type="text/javascript" src="/rsl_shared/style/jquery.ui/js/jquery-1.7.2.min.js"> </script>
+		<script type="text/javascript" src="twitter_bootstrap/js/bootstrap.min.js"> </script>
+		<script type="text/javascript" src="core/master.js"> </script>
+		<script type="text/javascript">
+
+			x.default_page = "home";
+
+			$(document).ready( function() {
+//				y.updateDate();
+//				y.unisrch(":input.css_page_unisrch");
+			});
+/*
+			var _gaq = _gaq || [];
+			_gaq.push(['_setAccount', 'UA-36505379-1']);
+			_gaq.push(['_setDomainName', 'rullionsolutions.com']);
+			_gaq.push(['_trackPageview']);
+			
+			(function() {
+				var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+				ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+				var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+			})();
+*/
+		</script>
+	</body>
+</html>
