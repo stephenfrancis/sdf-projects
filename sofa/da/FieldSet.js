@@ -35,7 +35,6 @@ x.FieldSet.addFields.doc = {
 
 
 x.FieldSet.addField = function (field_spec) {
-    var field;
     x.log.functionStart("addField", this, arguments);
     if (!field_spec.id || typeof field_spec.id !== "string") {
         throw x.Exception.clone({ id: "id_must_be_nonblank_string", fieldset: this, field_spec: x.Base.view.call(field_spec) });
@@ -46,9 +45,7 @@ x.FieldSet.addField = function (field_spec) {
     if (!field_spec.type || !x.fields[field_spec.type]) {
         throw x.Exception.clone({ id: "field_type_does_not_exist", field_type: field_spec.type, fieldset: this, field_spec: x.Base.view.call(field_spec) });
     }
-    field = x.fields[field_spec.type].clone(field_spec);
-    this.add(field);
-    return field;
+    return this.cloneField(x.fields[field_spec.type], field_spec);
 };
 
 x.FieldSet.cloneField = function (field, spec) {
@@ -56,6 +53,12 @@ x.FieldSet.cloneField = function (field, spec) {
     x.log.functionStart("cloneField", this, arguments);
     new_field = field.clone(spec);
     this.add(new_field);
+    if (this.page) {
+        this.page.addField(new_field);
+    }
+    if (this.instance) {
+        new_field.instantiate();
+    }
     return new_field;
 };
 
@@ -75,6 +78,9 @@ x.FieldSet.remove = function (id) {
     x.log.functionStart("remove", this, arguments);
     field = this.get(id);
     x.OrderedMap.remove.call(this, id);
+    if (this.page) {
+        this.page.removeField(field);
+    }
 };
 
 
@@ -175,7 +181,7 @@ x.FieldSet.getTokenValue = function (token) {
 x.FieldSet.setDelete = function (bool) {
     x.log.functionStart("setDelete", this, arguments);
     if (!this.isModifiable()) {
-        throw x.Exception.clone({ id: "fieldset_not_modifiable", fieldset: this });
+        throw new Error("fieldset not modifiable: " + this);
     }
     if (this.deleting !== bool) {
         x.log.trace("Changing deleting, set modified");
@@ -194,6 +200,15 @@ x.FieldSet.isModified = function () {
 };
 
 
+x.FieldSet.setModifiable = function (bool) {
+    x.log.functionStart("setModifiable", this, arguments);
+    if (!bool && this.isModified()) {
+        throw new Error("fieldset already modified: " + this);
+    }
+    this.modifiable = bool;
+};
+
+
 x.FieldSet.isModifiable = function () {
     x.log.functionStart("isModifiable", this, arguments);
     return this.modifiable;
@@ -203,15 +218,43 @@ x.FieldSet.isModifiable = function () {
 x.FieldSet.isValid = function () {
     x.log.functionStart("isValid", this, arguments);
     var valid = true;
-    if (this.deleting) {
-        return true;
-    }
-    this.each(function(field) {
+    this.each(function (field) {
         valid = valid && field.isValid();        
     });
     return valid;
 };
 
+x.FieldSet.getMessages = function (collector, delim) {
+    var that = this;
+    x.log.functionStart("getMessages", this, arguments);
+    this.each(function (field) {
+        if (!field.validated) {
+            field.validate();
+        }
+        collector = that.addMessageArray(collector, delim, field.messages, field.id);
+//        if (Array.isArray(arg)) {
+//            arg.splice(arg.length, 0, );          // append field messages
+//        } else {
+//            out += (arg || "\n") + field.messages.join(arg || "\n");
+//        }
+    });
+    return collector;
+};
+
+x.FieldSet.addMessageArray = function (collector, delim, array, prefix) {
+    x.log.functionStart("addMessageArray", this, arguments);
+    if (Array.isArray(collector)) {
+        collector.splice(collector.length, 0, array);          // append field messages
+    } else {
+        array.forEach(function (msg) {
+            if (collector) {
+                collector += (delim || "\n");
+            }
+            collector += "[" + msg.type + "] " + (prefix ? prefix + " " : "") + msg.text;            
+        });
+    }
+    return collector;
+};
 
 x.FieldSet.update = function (params) {
     x.log.functionStart("update", this, arguments);
@@ -230,6 +273,25 @@ x.FieldSet.render = function (xmlstream, render_opts) {
     });
 };
 
+x.FieldSet.addToPage = function (page, field_group) {
+    x.log.functionStart("addToPage", this, arguments);
+    this.page = page;
+    this.each(function(field) {
+        if (!field_group || field_group === field.field_group) {
+            page.addField(field);
+        }
+    });
+};
+
+x.FieldSet.removeFromPage = function (field_group) {
+    var page = this.page;
+    x.log.functionStart("removeFromPage", this, arguments);
+    this.each(function(field) {
+        if (!field_group || field_group === field.field_group) {
+            page.removeField(field);
+        }
+    });
+};
 
 x.FieldSet.updateComputed = function () {
     this.each(function(field) {

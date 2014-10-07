@@ -112,7 +112,7 @@ x.ui.close = function () {
 };
 
 x.ui.load = function (params, render_opts) {
-    var page;
+    var that = this;
     if (!this.active) {
         return;
     }
@@ -123,8 +123,12 @@ x.ui.load = function (params, render_opts) {
     try {
         if (params.page_id) {
             this.page = x.session.getPage(params.page_id, params.page_key, this);
-            this.page.update(params);
-            this.render(render_opts);
+        }
+        if (this.page) {
+            x.Entity.whenFinishedWaitingForDocuments(function () {
+                that.page.update(params);
+                that.render(render_opts);
+            });
         } else {
             x.log.debug("x.ui.load params = ", JSON.stringify(params));
             this.activate();
@@ -199,6 +203,12 @@ x.ui.collectParams = function (params) {
     });
 };
 
+x.ui.fieldEvent = function (input_elem, event_id) {
+    var control = input_elem.attr("id");
+    if (this.page && this.page.fields[control]) {
+        this.page.fields[control].fieldEvent(event_id, input_elem.val());
+    }
+};
 
 
 x.ui.main = x.ui.clone({
@@ -318,7 +328,8 @@ x.ui.modal.setTitle = function (title) {
 };
 
 x.ui.modal.setLinks = function (links) {
-    $("#css_modal .modal-footer"     ).empty();
+    var i;
+    $("#css_modal .modal-footer").empty();
     for (i = 0; page.links && i < page.links.length; i += 1) {
         $("#css_modal .modal-footer").append("<a class='btn' href='" + page.links[i].url + "'>" + page.links[i].label + "</a>");
     }

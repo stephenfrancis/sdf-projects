@@ -96,48 +96,27 @@ x.fields.Number.format = function (number_val) {
 };
 
 
-x.fields.Number.round = function (number) {
-    x.log.functionStart("round", this, arguments);
-    if (typeof number !== "number") {
-        number = this.getNumber(0);
+x.fields.Text.renderEditable = function (div, render_opts, inside_table) {
+    var str;
+    x.log.functionStart("renderEditable", this, arguments);
+    str = "<input type='" + this.input_type + "' class='" + this.getEditableSizeCSSClass(render_opts) +
+        "' value='" + this.getUpdateText() + "' id='" + this.getControl();
+    if (this.placeholder || this.helper_text) {
+        str += "' placeholder='" + (this.placeholder || this.helper_text);
     }
-    return parseFloat(number.toFixed(this.decimal_digits), 10);
+    if (typeof this.max === "number") {
+        str += "' max='" + this.max;
+    }
+    if (typeof this.min === "number") {
+        str += "' min='" + this.min;
+    }
+    if (typeof this.decimal_digits === "number") {
+        str += "' step='" + String(1 / Math.pow(10, parseInt(this.decimal_digits, 10)));
+    }
+    str += "' />";
+    div.addHTML(str);
 };
 
-
-x.fields.Number.getConditionValue = function () {
-    var val_text = this.val;
-    x.log.functionStart("getConditionValue", this, arguments);
-    if (this.val && !isNaN(this.val)) {
-        val_text = (this.getNumber() * Math.pow(10, this.decimal_digits)).toFixed(0);
-    }
-    return val_text;
-};
-
-x.fields.Number.getSQL = function () {
-    x.log.functionStart("getSQL", this, arguments);
-    return x.sql.escape(this.getConditionValue(), this.getDataLength());
-};
-
-x.fields.Number.setFromResultSet = function (resultset) {
-    var value;
-    x.log.functionStart("setFromResultSet", this, arguments);
-    if (!this.query_column) {
-        return;
-    }
-    try {
-        value = String(resultset.getString(this.query_column || this.getId()));        
-    } catch (e) {
-        throw x.Exception.clone({ id: "sql_get_failed", exception: e, column: (this.query_column || this.getId()), field: this });
-    }
-    if (value === "null") {
-        value = "";
-    } else if (!isNaN(value)) {
-        value = String(parseInt(value, 10) / Math.pow(10, this.decimal_digits));
-    }
-    x.log.trace(this, "setFromResultSet[" + this.query_column + "] setting to " + value);
-    this.setInitial(value);
-};
 
 x.fields.Number.generateTestValue = function (session, max, min) {
     var temp;

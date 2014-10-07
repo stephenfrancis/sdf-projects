@@ -35,7 +35,7 @@ x.http = function (options) {
         $.ajax(options);
     }
     return out;
-}
+};
 
 
 x.httpJava = function (method, url, headers, body) {

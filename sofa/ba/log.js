@@ -60,7 +60,7 @@ x.log = {
     },
 
     doLog : function (a, b, level) {
-        var str = (a ? a.toString() + ": " : "") + (b ? b.toString(): "");
+        var str = (a ? (a.path() !== "/" ? a.path() : a) + ": " : "") + (b && b.path() !== "/" ? b.path() : b);
         if (!this.counters[level]) {
             this.counters[level] = 0;
         }
@@ -111,7 +111,7 @@ x.log = {
         var str,
             i,
             j = 0;
-        str = obj + "." + funct;
+        str = obj.path() + "." + funct;
         if (this.checkLevel(this.levels.into, str)) {
             this.printLine("INTO : " + str + "(" + this.showArguments(args) + ")");
         }
@@ -131,8 +131,8 @@ x.log = {
     showArgument: function (arg) {
         if (typeof arg === "function") {
             return arg.name;
-        } else if (typeof arg === "object") {
-            return this.showObject(arg);
+        } else if (typeof arg === "object" && arg) {
+            return arg.view();
         } else if (typeof arg === "string") {
             return "'" + arg + "'";
         } else if (typeof arg === "number" || arg === "boolean") {

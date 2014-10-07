@@ -7,7 +7,7 @@ x.entities.ad_company = x.Entity.clone({
     area            : "ad",
     display_page    : true,
     transactional   : true,
-    title_field     : "title",
+    label_pattern   : "{title}",
     default_order   : "title",
     primary_key     : "id",
     icon            : "style/Axialis/Png/24x24/Home2.png",

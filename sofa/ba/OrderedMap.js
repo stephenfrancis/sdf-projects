@@ -2,6 +2,7 @@
 "use strict";
 
 x.OrderedMap = {
+    id  : "OrderedMap",
     map : {},
     arr : []
 };
@@ -25,10 +26,10 @@ x.OrderedMap.clone = function (spec) {
 
 x.OrderedMap.add = function (obj) {
     if (!obj.id || typeof obj.id !== "string") {
-        throw Error("id must be non-blank string");
+        throw new Error("id must be non-blank string");
     }
     if (this.map[obj.id]) {
-        throw Error("id already exists: " + obj.id);
+        throw new Error("id already exists: " + obj.id);
     }
     obj.owner = this;
     this.map[obj.id] = obj;
@@ -40,7 +41,7 @@ x.OrderedMap.add = function (obj) {
 x.OrderedMap.addAll = function (arr) {
     var i;
     if (!arr || typeof arr.length !== "number") {
-        throw Error("argument must be an array");
+        throw new Error("argument must be an array");
     }
     for (i = 0; i < arr.length; i += 1) {
         this.add(arr[i]);
@@ -54,7 +55,7 @@ x.OrderedMap.get = function (id) {
     } else if (typeof id === "number") {
         return this.arr[id];
     } else {
-        throw Error("argument must be a string or a number: " + id);
+        throw new Error("argument must be a string or a number: " + id);
     }
 };
 
@@ -65,7 +66,7 @@ x.OrderedMap.indexOf = function (id) {
     } else if (typeof id === "object") {
         return this.arr.indexOf(id);
     }
-    throw Error("argument must be a string or a number: " + id);
+    throw new Error("argument must be a string or a number: " + id);
 };
 
 
@@ -74,19 +75,19 @@ x.OrderedMap.remove = function (id) {
     if (typeof id === "string") {
         obj = this.map[id];
         if (!obj) {
-            throw Error("not found: " + id);
+            throw new Error("not found: " + id);
         }
         this.arr.splice(this.arr.indexOf(obj), 1);
         delete this.map[id];
     } else if (typeof id === "number") {
         if (id < 0 || id >= this.arr.length) {
-            throw Error("index out of range: " + id);
+            throw new Error("index out of range: " + id);
         }
         obj = this.arr[id];
         this.arr.splice(id, 1);
         delete this.map[obj.id];
     } else {
-        throw Error("argument must be a string or a number: " + id);
+        throw new Error("argument must be a string or a number: " + id);
     }
 };
 
@@ -98,7 +99,7 @@ x.OrderedMap.length = function () {
 
 x.OrderedMap.moveTo = function (id, position) {
     if (typeof position !== "number" || position < 0 || position > this.arr.length) {
-        throw Error("invalid position: " + position);
+        throw new Error("invalid position: " + position);
     }
     if (typeof id === "string") {
         id = this.arr.indexOf(this.map[id]);
@@ -106,7 +107,7 @@ x.OrderedMap.moveTo = function (id, position) {
             throw Error("not found: " + id);
         }
     } else if (typeof id !== "number") {
-        throw Error("argument must be a string or a number: " + id);
+        throw new Error("argument must be a string or a number: " + id);
     }
     this.arr.splice(position, 0, this.arr.splice(id, 1)[0]);
 };

@@ -23,16 +23,24 @@ x.fields.Option.doc = {
 };
 
 
+x.fields.Option.instantiate = function () {
+    x.log.functionStart("instantiate", this, arguments);
+    x.fields.Text.instantiate.call(this);
+    try {
+        this.getLoV();
+    } catch (e) {
+        this.messages.push({ type: 'E', text: "error with lov" });
+        return;
+    }
+};
+
+
 x.fields.Option.getLoV = function () {
     var sess;
     x.log.functionStart("getLoV", this, arguments);
     if (!this.lov) {
         if (this.list) {
-            sess = (this.owner && this.owner.page && this.owner.page.session) ? this.owner.page.session : null;
-            if (!sess) {
-                sess = (this.owner && this.owner.trans && this.owner.trans.session) ? this.owner.trans.session : null;
-            }
-            this.lov = x.LoV.getListLoV(this.list, sess);
+            this.lov = x.LoV.getListLoV(this.list);
         } else {
             this.lov = x.LoV.getBasicLoV();
             if (this.config_item && this.label_prop) {        // Object-based LoVs not cached (yet...)
@@ -58,12 +66,6 @@ x.fields.Option.validate = function () {
     x.log.functionStart("validate", this, arguments);
     val = this.get();
     x.fields.Text.validate.call(this);
-    try {
-        this.getLoV();
-    } catch (e) {
-        this.messages.push({ type: 'E', text: "error with lov" });
-        return;
-    }
     if (!this.lov) {
         this.messages.push({ type: 'E', text: "no lov found" });
     } else if (val) {                // Only do special validation is non-blank

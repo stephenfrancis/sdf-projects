@@ -334,6 +334,7 @@ x.sections.ListBase.renderListRow = function (table_elem, render_opts, row_obj) 
     x.log.functionStart("renderListRow", this, arguments);
     css_class = this.getRowCSSClass();
 //    this.updateAggregations();
+    this.row_count += 1;
     row_elem = table_elem.addChild("tr", null, css_class);
     this.rowURL(row_elem, row_obj);
     this.addRowToKeyArray(row_obj);
@@ -367,16 +368,6 @@ x.sections.ListBase.renderRepeatForm.doc = {
     purpose: "To render an object (usually a fieldset) as a form block, using FormBase.render() (not implemented)",
     args   : "element (xmlstream), render_opts, row_obj",
     returns: "the return value of FormBase.render()"
-};
-
-
-x.sections.ListBase.getRepeatFormTitle = function (row_obj) {
-    return row_obj.getField(row_obj.title_field).getText();
-};
-x.sections.ListBase.getRepeatFormTitle.doc = {
-    purpose: "tbd",
-    args   : "row_obj",
-    returns: "nothing"
 };
 
 

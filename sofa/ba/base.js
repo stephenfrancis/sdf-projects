@@ -50,6 +50,10 @@ Object.prototype.forOwn = function (funct) {
 //    return str;
 //};
 
+Object.isAnyObject = function (obj) {
+    return !!(typeof obj === "string" || typeof obj === "number" || typeof obj === "boolean" || obj);
+};
+
 
 
 String.prototype.repeat = function (num) {
@@ -115,7 +119,7 @@ Array.prototype.copy = function () {
 
 
 // sanity check method - ensures key doesn't already exist anywhere in prototype chain 
-Object.prototype.add = function (key, value) {
+Object.prototype.defineProperty = function (key, value) {
     if (typeof this[key] !== "undefined") {
         throw new Error("key already exists in prototype chain: " + key);
     }
@@ -123,26 +127,26 @@ Object.prototype.add = function (key, value) {
 };
 
 // sanity check method - ensures key doesn't already exist in this object
-Object.prototype.override = function (key, value) {
+Object.prototype.overrideProperty = function (key, value) {
     if (this.hasOwnProperty(key)) {
         throw new Error("key already exists in object: " + key);
     }
     this[key] = value;
 };
 
-Object.prototype.toString = function () {
+Object.prototype.path = function () {
     var out = "",
         level = this;
     while (level.parent) {
         out = "/" + (level.id || "") + out;
         level = level.parent;
     }
-    return out;
+    return out || "/";
 };
 
 Object.prototype.view = function (depth, incl_inherits) {
-    var out   = "{ ",
-        delim = "";
+    var out   = "{",
+        delim = " ";
 
     depth = depth || 0;
     if (depth > -1) {
@@ -150,13 +154,13 @@ Object.prototype.view = function (depth, incl_inherits) {
             out += delim + prop_id + ": " + Object.viewProp(prop_val, depth, incl_inherits);
             delim = ", ";
         });
-        return out + " }";
+        return out + delim.substr(1) + "}";
     }
     return "{...}";
 };
 
 Object.viewProp = function (prop_val, depth, incl_inherits) {
-    return (typeof prop_val === "undefined" ? "undefined" : (typeof prop_val === "null" ? "null" : prop_val.view(depth - 1, incl_inherits)));
+    return Object.isAnyObject(prop_val) ? prop_val.view(depth - 1, incl_inherits) : typeof prop_val;
 };
 
 Array.prototype.view = function (depth, incl_inherits) {

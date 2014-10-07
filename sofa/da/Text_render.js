@@ -113,13 +113,23 @@ x.fields.Text.renderLabel.doc = {
 
 
 x.fields.Text.renderInner = function (div, render_opts) {
+    if (div) {
+        this.inner_div = div;
+    }
+    if (!this.inner_div) {
+        throw new Error("no inner_div");
+    }
+    if (!render_opts) {
+        render_opts = {};
+    }
+    this.inner_div.empty();
     if (this.isEditable() && !render_opts.uneditable) {
-        this.renderEditable(div, render_opts);
+        this.renderEditable(this.inner_div, render_opts);
         if (!this.isValid()) {
-            this.renderErrors(div, render_opts);
+            this.renderErrors(this.inner_div, render_opts);
         }
     } else {
-        this.renderUneditable(div, render_opts);
+        this.renderUneditable(this.inner_div, render_opts);
     }
 };
 
@@ -281,7 +291,7 @@ x.fields.Text.getCSSClass.doc = {
 x.fields.Text.getCellCSSClass = function () {
     var css_class;
     x.log.functionStart("getCellCSSClass", this, arguments);
-    css_class = "css_type_" + this.css_type;
+    css_class = "control-group css_type_" + this.css_type;
     if (this.css_align) {
         css_class += " css_align_" + this.css_align;
     }

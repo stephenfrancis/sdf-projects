@@ -20,6 +20,7 @@ x.loadModule = function (src) {
 	x.loadFile(src + "/load.js");
 };
 
+load("../cdn/rsvp-2014-09-30/rsvp-latest.min.js");
 
 x.loadModule("ba");
 x.loadModule("da");

@@ -40,11 +40,12 @@ x.loadModule("da");
 x.loadModule("pa");
 x.loadModule("io");
 x.loadModule("ac");
+x.loadModule("sy");
 x.loadModule("ad");
 
 x.session = x.Session.clone({ user_id: "francis" });
 
-x.log.level = x.log.levels.trace;
+x.log.level = x.log.levels.debug;
 
 var y = {};
 
@@ -264,9 +265,9 @@ y.unisrch = function (selector) {
 //});
 
 //Target Input Blur
-//$(document).on("blur", ":input", function (event) {
-//    y.fieldBlur(this, event);
-//});
+$(document).on("blur", ":input", function (event) {
+    x.ui.getLocal($(this)).fieldEvent($(this), "blur");
+});
 
 //Target Input Keydown to blur on escape key press
 $(document).on("keydown", ":input", function (event) {
@@ -282,49 +283,6 @@ $(document).on("keydown", "div.css_edit > input", function (e) {
     }
 });
 
-//Activate handler for all fields (div.css_edit inputs)
-$(document).on("initialize", function (e, target, opts) {
-    target.find("div.css_edit").each(function() {
-        if ($(this).parents(".css_list").length > 0) {
-            $(this).children("span.css_field_errors").addClass("css_hide");
-        }
-
-        var json_obj = y.getRenderData($(this));
-        if ($(this).hasClass("css_type_number")) {
-            if (typeof json_obj.max === "number") {
-                $(this).find(":input").attr("max" , json_obj.max);
-            }
-            if (typeof json_obj.min === "number") {
-                $(this).find(":input").attr("min" , json_obj.min);
-            }
-            if (typeof json_obj.decimal_digits === "number") {
-                $(this).find(":input").attr("step", String(1 / Math.pow(10, parseInt(json_obj.decimal_digits, 10))));
-            }
-        }
-        if (json_obj.input_mask && !$(this).hasClass("css_type_date")) {
-            y.checkScript("/rsl_shared/style/jquery.maskedinput/jquery.maskedinput.min.js");
-            $(this).find(":input").mask(json_obj.input_mask);
-        }
-    });
-});
-
-/*---------------------------------------------Reloadable Field Handlers--------------------------------------------------------*/
-$(document).on("change", ".css_reload > :input", function (event) {
-//    var target = y.getTarget($(this));
-    //CL - Try to do this with the selector on the .change call if possible
-    if (!($(this).parent().hasClass("css_type_reference") && $(this).parent().children("input").length > 1)) {
-//        y.last_focused_input = $(this).attr("name");
-        x.ui.getLocal($(this)).load({ page_button: $(this).attr("id") });
-    }
-});
-
-// CL - Allows attributes field to trigger a reload
-$(document).on("change", ".css_reload > span > span.css_attr_item > :input", function (event) {
-    y.last_focused_input = $(this).attr("name");
-    x.ui.getLocal($(this)).load({ page_button: $(this).attr("id") });
-        //Could set last focused input here to avoid focus related scrolling weirdness?
-});
-
 
 /*-----------------------------------------------------Modal--------------------------------------------------------------------*/
 //Click handlers to load a modal
@@ -338,8 +296,6 @@ $(document).on("click", "a.css_open_in_modal", function (event) {
     x.ui.loadQueryString(url);
     return false;
 });
-
-
 
 
 /*------------------------------------------------------------------------------------------------------------------------------*/

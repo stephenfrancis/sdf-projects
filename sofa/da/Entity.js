@@ -3,11 +3,13 @@
 
 x.entities = {};
 
+x.documents = [];
+
 x.Entity = x.FieldSet.clone({
     id                      : "Entity",
-    database_url            : "http://localhost:5984/stevief/"
-//    events                  : x.EventStack.clone({ id: "Record.events", events: [
-//                                  "initCreate", "initUpdate", "load", "reload", "update", "afterTransChange", "presave" ] }),
+    database_url            : "http://other_apps:5984/stevief/",
+    events                  : x.EventStack.clone({ id: "Record.events", events: [
+                                  "initCreate", "initUpdate", "load", "reload", "update", "afterTransChange", "presave" ] })
 });
 
 // status: 'N'ew, 'L'oading, 'U'nmodified, 'M'odified, 'S'aving;    N > S > U,   L > U,   U > M > S > U,   S > E,   L > E
@@ -25,27 +27,11 @@ x.Entity.clone = function (spec) {
             if (!new_obj.primary_key) {
                 throw new Error("configuration error: invalid primary_key: " + new_obj.id);
             }
-        } else if (!this.parent_entity) {
-            throw new Error("configuration error: entity must have primary_key or parent_entity");
         }
-        if (this.children) {
-            new_obj.children = {};
-            this.children.forOwn(function (entity_id) {
-                new_obj.children[entity_id] = [];
-            });
-        }
-//        new_obj.status = 'C';
+        this.child_rows = {};
     } else {
-        if (new_obj.parent_entity) {            // parent_entity MUST be loaded first
-            x.log.trace("Linking " + new_obj.id + " to its parent " + new_obj.parent_entity );
-            if (!x.entities[new_obj.parent_entity]) {
-                throw x.Exception.clone({ id: "invalid_parent_entity", entity: new_obj.id, parent_entity: new_obj.parent_entity });
-            }
-            if (!x.entities[new_obj.parent_entity].children) {
-                x.entities[new_obj.parent_entity].children = {};
-            }
-            x.entities[new_obj.parent_entity].children[new_obj.id] = new_obj;
-        }
+        new_obj.events         = this.events  .clone({ id: new_obj.id + ".events" });
+        new_obj.events.record  = new_obj;
     }
     return new_obj;
 };
@@ -54,12 +40,13 @@ x.Entity.clone = function (spec) {
 
 x.Entity.getDocument = function (key) {
     var doc,
-        doc_id_prefix = (key && !this.primary_key.auto_generate ? this.id + ":" : "");
+        doc_id;
     x.log.functionStart("getDocument", this, arguments);
     key = key || "";
+    doc_id = key && ((!this.primary_key.auto_generate ? this.id + ":" : "") + key);
     doc = this.clone({
         id: key || this.id,
-        doc_id: doc_id_prefix + key,
+        doc_id: doc_id,
         instance: true,
         modifiable: true
     });
@@ -68,29 +55,63 @@ x.Entity.getDocument = function (key) {
     } else {
         doc.status = 'N';    // New
     }
+    x.documents.push(doc);
     return doc;
 };
 
-x.Entity.addChild = function (entity_id) {
-    if (!this.children || !this.children[entity_id]) {
-        throw new Error("Not a child of this entity: " + entity_id);
+x.Entity.isWaiting = function () {
+    return (this.status === 'L' || this.status === 'S');
+};
+
+x.Entity.whenFinishedWaitingForDocuments = function (callback) {
+    x.documents_waiting_callback = callback;
+    x.Entity.runCallbackIfNoLongerWaiting();
+};
+
+x.Entity.waitingForDocuments = function (callback) {
+    var waiting = false,
+        i;
+    for (i = 0; i < x.documents.length && !waiting; i += 1) {
+        waiting = x.documents[i].isWaiting();
     }
-    new_row = this.parent.children[entity_id].clone({
-        id: this.id + "/" + entity_id + "[" + this.children[entity_id].length + "]",
+    return waiting;
+};
+
+x.Entity.runCallbackIfNoLongerWaiting = function () {
+    if (typeof x.documents_waiting_callback === "function" && !x.Entity.waitingForDocuments()) {
+        x.documents_waiting_callback();
+        x.documents_waiting_callback = null;
+    }
+};
+
+
+x.Entity.addChild = function (entity_id) {
+    var new_row;
+    x.log.functionStart("addChild", this, arguments);
+//    if (!this.parent.children || !this.parent.children[entity_id]) {
+//        throw new Error("Not a child of this entity: " + entity_id);
+//    }
+//    new_row = this.parent.children[entity_id].clone({
+    if (!this.child_rows[entity_id]) {
+        this.child_rows[entity_id] = [];
+    }
+    new_row = x.entities[entity_id].clone({
+        id: this.id + "/" + entity_id + "[" + this.child_rows[entity_id].length + "]",
         instance: true, modifiable: true, owner: this
     });
-    this.children[entity_id].push(new_row);
+    this.child_rows[entity_id].push(new_row);
     return new_row;
 };
 
-x.Entity.eachChildRow = function (funct) {
-    if (this.children) {
-        this.children.forOwn(function (entity_id, row_array) {
+x.Entity.eachChildRow = function (funct, specific_entity_id) {
+    x.log.functionStart("eachChildRow", this, arguments);
+    this.child_rows.forOwn(function (entity_id, row_array) {
+        if (!specific_entity_id || specific_entity_id === entity_id) {
             row_array.forOwn(function (i, row) {
                 funct(row);
             });
-        });
-    }
+        }
+    });
 };
 
 x.Entity.load = function () {
@@ -104,7 +125,7 @@ x.Entity.load = function () {
     }
     x.log.debug(this, "load() doc_id: " + this.doc_id);
     this.status = 'L';    // Loading
-    x.http({ url: this.database_url + this.doc_id, cache: false, async: false, type: "GET",
+    x.http({ url: this.database_url + encodeURIComponent(this.doc_id), cache: false, async: false, type: "GET",
         success: function (data_back) {
             x.log.debug(that, "calling load.success()");
             if (that.status !== 'L') {
@@ -116,11 +137,13 @@ x.Entity.load = function () {
             that.rev    = data_back._rev;
             that.status = 'U';
             // trigger loaded
+            x.Entity.runCallbackIfNoLongerWaiting();
         },
         error: function (code, msg) {
             x.log.debug(that, "calling load.error()");
             that.status = 'E';
             that.error  = "[" + code + "] " + msg;
+            x.Entity.runCallbackIfNoLongerWaiting();
         }
     });
 };
@@ -136,7 +159,7 @@ x.Entity.save = function () {
         throw new Error("invalid call on child row: " + this);
     }
     if (!this.isValid()) {
-        throw new Error("document is not valid: " + this.getError());
+        throw new Error("document is not valid");
     }
     if (!this.doc_id) {
         if (!this.primary_key.auto_generate) {
@@ -146,7 +169,7 @@ x.Entity.save = function () {
             this.doc_id = this.id + ":" + this.primary_key.get();
         }
     }
-    url = this.database_url + this.doc_id;
+    url = this.database_url + encodeURIComponent(this.doc_id);
     if (this.rev) {
         url += "?rev=" + this.rev;
     }
@@ -167,27 +190,29 @@ x.Entity.save = function () {
                 that.status = 'E';
                 that.error  = "unknown: " + data_back.ok;
             }
+            x.Entity.runCallbackIfNoLongerWaiting();
         },
         error: function (code, msg) {
             x.log.debug(that, "calling save.error()");
             that.status = 'E';
             that.error  = "[" + code + "] " + msg;
+            x.Entity.runCallbackIfNoLongerWaiting();
         }
     });
 };
 
 x.Entity.populate = function (data_back) {
+    var that = this;
     x.log.functionStart("populate", this, arguments);
-    print(JSON.stringify(data_back));
     this.each(function (field) {
         if (typeof data_back[field.id] === "string") {
             field.setInitial(data_back[field.id]);
         }
     });
-    if (this.children && data_back.children) {
-        data_back.children.forOwn(function (entity_id, row_array) {
+    if (data_back.child_rows) {
+        data_back.child_rows.forOwn(function (entity_id, row_array) {
             row_array.forOwn(function (i, row) {
-                this.addChild(entity_id).populate(row);
+                that.addChild(entity_id).populate(row);
             });
         });
     }
@@ -196,23 +221,28 @@ x.Entity.populate = function (data_back) {
 x.Entity.getData = function () {
     var out = {};
     x.log.functionStart("getData", this, arguments);
+    if (!this.owner) {
+        out.entity_id = this.parent.id;
+    }
     this.each(function (field) {
         field.getData(out);
     });
     this.eachChildRow(function (row) {
-        if (!out.children) {
-            out.children = {};
+        if (!out.child_rows) {
+            out.child_rows = {};
         }
-        if (!out.children[row.parent.id]) {
-            out.children[row.parent.id] = [];
+        if (!out.child_rows[row.parent.id]) {
+            out.child_rows[row.parent.id] = [];
         }
-        out.children[row.parent.id].push(row.getData());
+        if (!row.deleting) {
+            out.child_rows[row.parent.id].push(row.getData());
+        }
     });
     return out;
 };
 
 x.Entity.getLabel = function (pattern_type) {
-    var pattern = this["label_pattern_" + pattern_type] || this.label_pattern || "{" + this.title_field + "}";
+    var pattern = this["label_pattern_" + pattern_type] || this.label_pattern;
     x.log.functionStart("getLabel", this, arguments);
     return this.detokenize(pattern);
 };
@@ -255,32 +285,24 @@ x.Entity.isValid = function () {
     x.log.functionStart("isValid", this, arguments);
     valid = (x.FieldSet.isValid.call(this) && this.status !== 'E');
     this.eachChildRow(function (row) {
-        valid = valid && row.isValid();
+        valid = valid && (row.deleting || row.isValid());
     });
     return valid;
 };
 
-
-x.Entity.setDelete = function (bool) {
-    var that = this;
-    x.log.functionStart("setDelete", this, arguments);
-    x.FieldSet.setDelete.call(this, bool);
-/* - nice idea, but needs testing                        TODO
-    if (this.action === "C" || this.action === "I") {
-        this.action = bool ? "I" : "C";        // 'I' = ignore (create & delete); 'C' = create
-    } else if (this.action === "U" || this.action === "D") {
-        this.action = bool ? "D" : "U";        // 'D' = delete; 'U' = update
+x.Entity.getMessages = function (collector, delim) {
+    x.log.functionStart("getMessages", this, arguments);
+    if (!collector) {
+        collector = "";
     }
-*/
-    if (this.deleting && this.db_record_exists && !this.db_record_locked) {
-//        this.lock();      trans.getRow() and trans.getActiveRow() now lock the obtained row
-        this.eachChildRow(function(row, query) {
-            if (!row) {
-                row = query.getRow(that.trans);
-            }
-            row.setDelete(bool);
-        });
+    if (this.error) {
+        collector = this.addMessageArray(collector, delim, [{ type: 'E', text: this.error }]);
     }
+    collector = x.FieldSet.getMessages.call(this, collector, delim);
+    this.eachChildRow(function (row) {
+        collector = row.getMessages(collector, delim);
+    });
+    return collector;
 };
 
 
@@ -294,9 +316,14 @@ x.Entity.beforeFieldChange = function (field, new_val) {
 
 x.Entity.afterFieldChange = function (field, old_val) {
     x.log.functionStart("afterFieldChange", this, arguments);
-    x.log.trace("afterFieldChange: " + field.getId() + ", " + old_val + "->" + field.get());
     x.FieldSet.afterFieldChange.call(this, field, old_val);
-    if (!this.owner) {
+    this.setModified();
+};
+
+x.Entity.setModified = function () {
+    if (this.owner) {
+        this.owner.setModified();
+    } else {
         this.status = "M";
     }
 };
@@ -304,15 +331,6 @@ x.Entity.afterFieldChange = function (field, old_val) {
 
 x.Entity.update  = function () {
     var label = this.getLabel();
-    if (this.messages && this.messages.prefix) {            // Only update prefix if it not blank
-        this.messages.prefix = this.title;
-        if (label) {
-            this.messages.prefix += " " + label;
-        }
-        if (this.duplicate_key) {
-            this.messages.add({ type: 'E', text: "Duplicate key" });
-        }
-    }
     this.events.trigger("update", this);
 };
 

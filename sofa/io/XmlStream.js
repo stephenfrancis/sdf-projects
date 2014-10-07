@@ -101,5 +101,10 @@ x.XmlStream.addHTML = function (text) {
     }
 };
 
+x.XmlStream.empty = function () {
+    x.log.functionStart("empty", this, arguments);
+    this.jquery_elem.empty();
+};
+
 //To show up in Chrome debugger...
 //@ sourceURL=io/XmlStream.js

@@ -72,6 +72,12 @@ x.fields.Text.doc = {
 };
 
 
+// called when cloned on a FieldSet that has instance = true
+x.fields.Text.instantiate = function () {
+    x.log.functionStart("instantiate", this, arguments);
+};
+
+
 x.fields.Text.getControl = function () {
     x.log.functionStart("getControl", this, arguments);
     if (this.owner && this.owner.control_prefix) {
@@ -79,7 +85,6 @@ x.fields.Text.getControl = function () {
     }
     return this.id;
 };
-
 
 x.fields.Text.get = function () {
     x.log.functionStart("get", this, arguments);
@@ -352,7 +357,7 @@ x.fields.Text.isValid = function () {
         if (msg.type === 'E') {
             out = false;
         }
-    })
+    });
     return out;
 };
 x.fields.Text.isValid.doc = {
@@ -567,6 +572,14 @@ x.fields.Text.getTokenValue = function (token_parts) {
     }
     return out;
 };
+
+
+x.fields.Text.fieldEvent = function (event_id, new_val) {
+    x.log.functionStart("fieldEvent", this, arguments);
+    this.set(new_val);
+    this.renderInner();
+};
+
 
 //To show up in Chrome debugger...
 //@ sourceURL=da/Text.js

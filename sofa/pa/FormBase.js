@@ -28,6 +28,7 @@ x.sections.FormBase.setFieldSet = function (fieldset) {
     x.log.functionStart("setFieldSet", this, arguments);
     this.fieldset = fieldset;
     this.fieldset.control_prefix = this.id;
+    this.fieldset.addToPage(this.owner.page);
     if (this.layout === "form-horizontal") {
         this.fieldset.tb_input = this.form_horiz_tb_input;
     } else if (this.layout === "multi-column") {
@@ -35,7 +36,7 @@ x.sections.FormBase.setFieldSet = function (fieldset) {
     }
 };
 x.sections.FormBase.setFieldSet.doc = {
-    purpose: "Add the FieldSet argument to this object and call its addFieldsByControl() method to add its fields to the page-level field collection",
+    purpose: "Add the FieldSet argument to this object and call its addToPage() method to add its fields to the page-level field collection",
     args   : "FieldSet object to apply to this section",
     returns: "nothing"
 };
@@ -251,7 +252,7 @@ x.sections.Display.doc = {
     location: "x.sections",
     purpose: "To show a record read-only",
     properties: {
-        entity        : { label: "String id of entity to display", type: "string", usage: "required in spec" },
+        entity_id   : { label: "String id of entity to display", type: "string", usage: "required in spec" },
 //        record        : { label: "Entity object of given id - redundant, as same a fieldset", type: "x.Entity", usage: "read only" }
     }
 };
@@ -264,39 +265,34 @@ x.sections.Display.setup = function () {
     if (this.fieldset) {
         return;                    // done manually in setupStart
     }
-    if (!this.entity || !x.entities[this.entity]) {
-        throw x.Exception.clone({ id: "entity_not_found", entity: this.entity, section: this });
+    if (!this.entity_id || !x.entities[this.entity_id]) {
+        throw x.Exception.clone({ id: "entity_not_found", entity: this.entity_id, section: this });
     }
 
     if (this.key) {
-        this.setFieldSet(x.entities[this.entity].getRow(this.key));
+        this.setFieldSet(x.entities[this.entity_id].getDocument(this.key));
     } else if (this.link_field) {
         if (!this.owner.page.getDocument().getField(this.link_field)) {
-            throw x.Exception.clone({ id: "link_field_invalid"    , entity: this.entity, section: this, link_field: this.link_field });
+            throw x.Exception.clone({ id: "link_field_invalid"    , entity: this.entity_id, section: this, link_field: this.link_field });
         }
         link_key = this.owner.page.getDocument().getField(this.link_field).get();
         if (!link_key) {
-            throw x.Exception.clone({ id: "link_key_not_specified", entity: this.entity, section: this, link_field: this.link_field });
+            throw x.Exception.clone({ id: "link_key_not_specified", entity: this.entity_id, section: this, link_field: this.link_field });
         }
-        this.setFieldSet(x.entities[this.entity].getRow(link_key));
+        this.setFieldSet(x.entities[this.entity_id].getRow(link_key));
     } else if (this.owner.page.page_key_entity) {
-        if (this.entity === this.owner.page.page_key_entity.id && this.owner.page.page_key) {
+        if (this.entity_id === this.owner.page.page_key_entity.id && this.owner.page.page_key) {
             this.setFieldSet(this.owner.page.page_key_entity.getRow(this.owner.page.page_key));
         }
-    } else if (this.entity === this.owner.page.entity.id && this.owner.page.page_key) {
-        this.setFieldSet(this.owner.page.entity.getRow(this.owner.page.page_key));
+    } else if (this.entity_id === this.owner.page.entity.id && this.owner.page.page_key) {
+        this.setFieldSet(this.owner.page.getDocument());
     }
+    this.fieldset.setModifiable(false);
 };
 x.sections.Display.setup.doc = {
     purpose: "To prepare the Display section, calling setFieldSet() on the page's primary_row, if the entity id's match and there is no link_field defined",
     args   : "none",
     returns: "nothing"
-};
-
-x.sections.Display.update = function (param) {
-    x.log.functionStart("update", this, arguments);
-    x.sections.FormBase.update(param);
-    this.fieldset.reload();
 };
 
 
@@ -315,16 +311,16 @@ x.sections.Create.doc = {
 x.sections.Create.setup = function () {
     x.log.functionStart("setup", this, arguments);
     x.sections.FormBase.setup.call(this);
-    if (!this.entity || !x.entities[this.entity]) {
-        throw x.Exception.clone({ id: "entity_not_found", entity: this.entity, section: this });
+    if (!this.entity_id || !x.entities[this.entity_id]) {
+        throw x.Exception.clone({ id: "entity_not_found", entity: this.entity_id, section: this });
     }
     if (this.link_field) {
-        this.setFieldSet(this.owner.page.getTrans().createNewRow(this.entity));
+        this.setFieldSet(this.owner.page.getTrans().createNewRow(this.entity_id));
         this.fieldset.linkToParent(this.owner.page.getDocument(), this.link_field);
-    } else if (this.entity === this.owner.page.entity.id) {
+    } else if (this.entity_id === this.owner.page.entity.id) {
         this.setFieldSet(this.owner.page.getDocument());
     } else {
-        this.setFieldSet(this.owner.page.getTrans().createNewRow(this.entity));
+        this.setFieldSet(this.owner.page.getTrans().createNewRow(this.entity_id));
     }
 };
 x.sections.Create.setup.doc = {
@@ -352,23 +348,23 @@ x.sections.Update.setup = function () {
         link_row;
     x.log.functionStart("setup", this, arguments);
     x.sections.Section.setup.call(this);
-    if (!this.entity || !x.entities[this.entity]) {
-        throw x.Exception.clone({ id: "entity_not_found", entity: this.entity, section: this });
+    if (!this.entity_id || !x.entities[this.entity_id]) {
+        throw x.Exception.clone({ id: "entity_not_found", entity: this.entity_id, section: this });
     }
     if (this.key) {
-        this.setFieldSet(this.owner.page.getTrans().getActiveRow(this.entity, this.key));
+        this.setFieldSet(this.owner.page.getTrans().getActiveRow(this.entity_id, this.key));
     } else if (this.link_field) {
         parent_record = this.owner.page.getDocument();
         if (!parent_record.getField(this.link_field)) {
-            throw x.Exception.clone({ id: "link_field_invalid", entity: this.entity, section: this, link_field: this.link_field });
+            throw x.Exception.clone({ id: "link_field_invalid", entity: this.entity_id, section: this, link_field: this.link_field });
         }
         link_row = parent_record.getField(this.link_field).getRow();
         if (!link_row) {
-            throw x.Exception.clone({ id: "link_key_not_specified", entity: this.entity, section: this, link_field: this.link_field });
+            throw x.Exception.clone({ id: "link_key_not_specified", entity: this.entity_id, section: this, link_field: this.link_field });
         }
         this.setFieldSet(link_row);
         link_row.linkToParent(parent_record, this.link_field);
-    } else if (this.entity === this.owner.page.entity.id) {
+    } else if (this.entity_id === this.owner.page.entity.id) {
         this.setFieldSet(this.owner.page.getDocument());
     }
 //    if (this.fieldset.lock) {
@@ -402,23 +398,23 @@ x.sections.Delete.setup = function () {
         link_row;
     x.log.functionStart("setup", this, arguments);
     x.sections.Section.setup.call(this);
-    if (!this.entity || !x.entities[this.entity]) {
-        throw x.Exception.clone({ id: "entity_not_found", entity: this.entity, section: this });
+    if (!this.entity_id || !x.entities[this.entity_id]) {
+        throw x.Exception.clone({ id: "entity_not_found", entity: this.entity_id, section: this });
     }
     if (this.key) {
-        this.setFieldSet(this.owner.page.getTrans().getActiveRow(this.entity, this.key));
+        this.setFieldSet(this.owner.page.getTrans().getActiveRow(this.entity_id, this.key));
     } else if (this.link_field) {
         parent_record = this.owner.page.getDocument();
         if (!parent_record.getField(this.link_field)) {
-            throw x.Exception.clone({ id: "link_field_invalid", entity: this.entity, section: this, link_field: this.link_field });
+            throw x.Exception.clone({ id: "link_field_invalid", entity: this.entity_id, section: this, link_field: this.link_field });
         }
         link_row = this.owner.page.getDocument().getField(this.link_field).getRow();
         if (!link_row) {
-            throw x.Exception.clone({ id: "link_key_not_specified", entity: this.entity, section: this, link_field: this.link_field });
+            throw x.Exception.clone({ id: "link_key_not_specified", entity: this.entity_id, section: this, link_field: this.link_field });
         }
         this.setFieldSet(link_row);
         link_row.linkToParent(parent_record, this.link_field);
-    } else if (this.entity === this.owner.page.entity.id) {
+    } else if (this.entity_id === this.owner.page.entity.id) {
         this.setFieldSet(this.owner.page.getDocument());
         this.owner.page.exit_url_save = this.owner.page.session.home_page_url;
     }

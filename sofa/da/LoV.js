@@ -6,60 +6,15 @@ x.LoV = x.OrderedMap.clone({
     id                      : "LoV",
     blank_label             : "[blank]",
     choose_label            : "[choose]",
-    complete                : false,        // loaded all rows in entity?
 });
-x.LoV.doc = {
-    location                : "x",
-    file                    : "$Header: /rsl/rsl_app/core/trans/LoV.js,v 1.55 2014/07/22 07:50:56 francis Exp $",
-    purpose                 : "To support a list of available options for drop-downs, radio buttons, etc",
-    properties              : {
-        complete            : { label: "Whether or this LoV is completely loaded (only relevant for 'entity' or 'list' LoVs", type: "boolean", usage: "read only" },
-        entity              : { label: "String id of entity for 'entity' LoV only", type: "string", usage: "required in spec (if 'entity' LoV)" },
-        list                : { label: "String id of list for 'list' LoV only (e.g. 'sy.yesno')", type: "string", usage: "required in spec (if 'list' LoV)" }
-    }
-};
-
-
-x.LoV.getBasicLoV = function () {
-    var lov;
-    x.log.functionStart("getBasicLoV", this, arguments);
-    lov = x.LoV.clone({ id: "dummy" });
-    return lov;
-};
-
-x.LoV.getListLoV = function (list_id, session) {
-    var lov;
-    x.log.functionStart("getListLoV", this, arguments);
-    lov = x.LoV.clone({ id: list_id, list: list_id });
-    lov.loadList();
-    return lov;
-};
-
-x.LoV.resetCachedListLoV = function (session, list_id) {
-    var lov;
-    x.log.functionStart("resetCachedListLoV", this, arguments);
-};
-
-x.LoV.getEntityLoV = function (entity_id, session, condition) {
-    var lov;
-    x.log.functionStart("getEntityLoV", this, arguments);
-    lov = x.LoV.clone({ id: entity_id, entity: entity_id, condition: condition });
-    return lov;
-};
-
-x.LoV.resetCachedEntityLoV = function (session, entity_id, key) {
-    var cache_code,
-        lov;
-    x.log.functionStart("resetCachedEntityLoV", this, arguments);
-};
 
 x.LoV.addItem = function (id, label, active) {
     x.log.functionStart("addItem", this, arguments);
     if (!label) {
-        throw x.Exception.clone({ id: "label_must_be_nonblank", lov: this, item: this.id + ":" + id });
+        throw new Error("label must be nonblank: " + this + "." + id);
     }
     if (typeof active !== "boolean") {
-        throw x.Exception.clone({ id: "active_property_must_be_boolean", lov: this, item: this.id + ":" + id });
+        throw new Error("active property must be boolean: " + this + "." + id);
     }
     x.log.trace("Adding item { id:" + this.id + ":" + id + ", label:" + label + ", active:" + active + "}");
     return this.add(x.Base.clone({ id: id, label: label, active: active }));
@@ -75,140 +30,12 @@ x.LoV.getItem = function (id) {
     return item;
 };
 
-x.LoV.clear = function () {
-    x.log.functionStart("clear", this, arguments);
-    x.OrderedMap.clear.call(this);
-    this.complete = false;
-};
-
-x.LoV.reload = function () {
-    x.log.functionStart("reload", this, arguments);
-    if (this.list) {
-        this.loadList();
-    } else if (this.entity) {
-        this.loadEntity();
-    } else if (this.config_item && this.label_prop) {
-        this.loadObject(x.Base.getObject(this.config_item), this.label_prop, this.active_prop);
-    }
-};
-
-x.LoV.loadList = function () {
-    var sql,
-        lastItem = null,
-        resultset;
-
-    x.log.functionStart("loadList", this, arguments);
-    if (!this.list || typeof this.list !== "string" || !this.list.match(/^[a-z]{2}\.[a-z_]+$/)) {
-        throw x.Exception.clone({ id: "invalid_list_id", lov: this, list: this.list });
-    }
-    this.clear();
-    sql = "SELECT SQL_CACHE id, text, active FROM sy_list_item WHERE list=" + x.sql.escape(this.list) + " ORDER BY seq_number";
-    try {
-        resultset = x.sql.connection.executeQuery(sql);
-        while (resultset.next()) {
-            lastItem = this.addItem(String(resultset.getString(1)), String(resultset.getString(2)), (String(resultset.getString(3)) === "A"));
-        }
-    } catch (e) {
-        x.log.report(e);
-    } finally {
-        x.sql.connection.finishedWithResultSet(resultset);
-    }
-    resultset.close();
-    this.complete = true;
-    return lastItem;
-};
-
-x.LoV.loadEntity = function (key, condition) {
-    var rcd,
-        query,
-        lastItem = null;
-
-    x.log.functionStart("loadEntity", this, arguments);
-    condition = condition || this.condition;
-    if (!this.entity) {
-        throw x.Exception.clone({ id: "entity_not_specified", lov: this });
-    }
-    if (!x.entities[this.entity]) {
-        throw x.Exception.clone({ id: "unknown_entity", entity: this.entity, lov: this });
-    }
-    rcd = x.entities[this.entity].clone({ id: this.entity, connection: this.connection || x.sql.connection });
-    if (key) {
-        rcd.checkKey(key);            // throws Exception is key is invalid
-        if (this.get(key)) {
-            this.remove(key);
-        }
-    }
-    query = rcd.getQuery();
-    query.use_query_cache = true;
-    if (key) {
-        query.addCondition({ column: "A._key", operator: "=", value: key });
-    } else {
-        rcd.setDefaultSort(query);            // only sort if getting lots of records
-        if (condition) {
-            query.addCondition({ full_condition: condition });
-        }
-        this.clear();
-    }
-    while (query.next()) {
-        rcd.populate(query.resultset);
-        lastItem = this.addItem(rcd.getKey(), rcd.getLabel("dropdown"), true);
-    }
-    query.reset();
-    if (!key) {
-        this.complete = true;
-    }
-    return lastItem;
-};
-
-x.LoV.loadObject = function (obj, label_prop, active_prop) {
-    var i,
-        active = true,
-        lastItem = null;
-    x.log.functionStart("loadObject", this, arguments);
-    this.clear();
-    for (i in obj) {
-        if (obj.hasOwnProperty(i)) {
-            if (active_prop) {
-                active = obj[i][active_prop];
-            }
-            lastItem = this.addItem(i, obj[i][label_prop], active);
-        }
-    }
-    if (!lastItem) {
-        throw x.Exception.clone({ id: "no_config_items_found", lov: this });
-    }
-    this.complete = true;
-    return lastItem;
-};
-
-x.LoV.loadArray = function (array, id_prop, label_prop, active_prop) {
-    var i,
-        active = true,
-        lastItem = null;
-    x.log.functionStart("loadArray", this, arguments);
-    this.clear();
-    for (i = 0; i < array.length; i += 1) {
-        if (active_prop) {
-            active = array[i][active_prop];
-        }
-        lastItem = this.addItem(array[i][id_prop], array[i][label_prop], active);
-    }
-    if (!lastItem) {
-        throw x.Exception.clone({ id: "no_config_items_found", lov: this });
-    }
-    this.complete = true;
-    return lastItem;
-};
-
 x.LoV.render = function (div, render_opts, val, control, css_class, mandatory) {
     var i,
         item,
         select,
         option;
     x.log.functionStart("render", this, arguments);
-    if (!this.complete) {
-        this.reload();
-    }
     select = div.addChild("select", control, css_class);
     select.attribute("name", control);
     if (!mandatory) {
@@ -246,9 +73,6 @@ x.LoV.renderRadio = function (div, render_opts, val, control, css_class, mandato
         radio,
         label;
     x.log.functionStart("renderRadio", this, arguments);
-    if (!this.complete) {
-        this.reload();
-    }
     inner = div.addChild("span", control, css_class);
 //    div.attribute("id", control, css_class);
     if (!mandatory) {
@@ -290,8 +114,8 @@ x.LoV.renderMulti = function (div, render_opts, control, pieces, css_class) {
         checkbox,
         label;
     x.log.functionStart("renderMulti", this, arguments);
-    if (!this.complete) {
-        this.reload();
+    if (!this.loaded) {
+        this.loadDocument();
     }
     inner = div.addChild("span", control, css_class);
     checkbox = inner.addChild("input");
@@ -334,25 +158,6 @@ x.LoV.queryMerge = function (query, lov_column, callback) {
     });
 };
 
-x.LoV.addCountsFromSQL = function (sql) {
-    var resultset,
-        item;
-    x.log.functionStart("addCountsFromSQL", this, arguments);
-    try {
-        resultset = x.sql.connection.executeQuery(sql);
-        while (resultset.next()) {
-            item = this.getItem(x.sql.getColumnString(resultset, 1));
-            if (item) {
-                item.count = resultset.getInt(2);
-            }
-        }
-    } catch (e) {
-        x.log.report(e);
-    } finally {
-        x.sql.connection.finishedWithResultSet(resultset);
-    }
-};
-
 x.LoV.getCountString = function (include_zeros) {
     var str = "",
         delim = "",
@@ -373,6 +178,70 @@ x.LoV.getCountString = function (include_zeros) {
     }
     return str;
 };
+
+
+
+x.ObjectLoV = x.LoV.clone({
+    id                      : "ObjectLoV",
+});
+
+x.ObjectLoV.loadObject = function (obj) {
+    var that = this;
+    x.log.functionStart("loadObject", this, arguments);
+    if (!this.label_property) {
+        throw new Error("no label property defined: " + this);
+    }
+    obj.forOwn(function (prop_id, prop_val) {
+        that.addItem(prop_id, prop_val[that.label_property], that.active_property ? prop_val[that.active_property] : true);
+    });
+};
+
+x.ObjectLoV.loadArray = function (array) {
+    var i;
+    x.log.functionStart("loadArray", this, arguments);
+    for (i = 0; i < array.length; i += 1) {
+        this.addItem(array[i][this.id_property], array[i][this.label_property], this.active_property ? prop_val[this.active_property] : true);
+    }
+    if (!lastItem) {
+        throw new Error("no config items found: " + this);
+    }
+};
+
+
+x.DocumentLoV = x.LoV.clone({
+    id                      : "DocumentLoV",
+});
+
+x.DocumentLoV.clone = function (spec) {
+    var new_obj;
+    new_obj = x.LoV.clone.call(this, spec);
+    if (spec.entity_id && spec.key) {
+        new_obj.startDocumentLoad(spec.entity_id, spec.key);
+    }
+    return new_obj;
+};
+
+x.DocumentLoV.startDocumentLoad = function (entity_id, key) {
+    this.document = x.entities[entity_id].getDocument(key);
+};
+
+x.DocumentLoV.loadRow = function (row) {
+    this.addItem(row.getField(this.id_field).get(), row.getField(this.label_field).get(), true);
+};
+
+x.DocumentLoV.loadDocument = function () {
+    var that = this;
+//    if (!this.document || this.document.isWaiting()) {
+//        throw new Error("this.document doesn't exist or is loading");
+//    }
+    if (!this.list_sub_entity || !this.document.child_rows[this.list_sub_entity]) {
+        throw new Error("this.list_sub_entity not defined or not present");
+    }
+    this.document.eachChildRow(function (row) {
+        that.loadRow(row);
+    }, this.list_sub_entity);
+};
+
 
 //To show up in Chrome debugger...
 //@ sourceURL=da/LoV.js
