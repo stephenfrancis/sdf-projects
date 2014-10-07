@@ -8,8 +8,8 @@
 		<meta name="author" content="">
 		<meta http-equiv="Content-Type" content="text/html; charset=utf-8" /> 
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-		<link rel="stylesheet" type="text/css" href="/rsl_shared/style/bootstrap-3.1.1-dist/css/bootstrap.min.css" media="screen" />
-		<link rel="stylesheet" type="text/css" href="/rsl_shared/style/alohaeditor-0.25.2/aloha/css/aloha.css" />
+		<link rel="stylesheet" type="text/css" href="/cdn/twitter-bootstrap-v3.1.1/css/bootstrap.min.css" media="screen" />
+		<link rel="stylesheet" type="text/css" href="/cdn/alohaeditor-v0.25.2/aloha/css/aloha.css" />
 		<style type="text/css">
 body						{ font-family: Arial; }
 .css_hide					{ display: none; }
@@ -22,20 +22,29 @@ a#status.online				{ color: green; }
 a#status.offline			{ color: red; }
 a#status.replicating		{ color: blue; }
 
-#index_area tr[docKey]		{ cursor: pointer; }
-#index_area th.sel			{ width: 20px; }
-#index_area td.sel > span.glyphicon				{ display: none; }
-#index_area td.doc_info		{ /*display: none;*/ font-size: x-small; color: gray; }
-#index_area tr.info > td.sel > span.glyphicon	{ display: inline-block; }
-#index_area tr > th:nth-child(2)	{ max-width: 200px; }
-#index_area tr > td:nth-child(2)	{ max-width: 200px; }
+#doc_tree li > div	{ display: inline; }
+#doc_tree ul 					 { list-style-type: none; padding-left: 24px; }
+#doc_tree ul > li.tree_leaf		 {}
+#doc_tree ul > li > a.tree_icon	 { cursor: pointer; font-weight: bold; margin-right: 4px; text-decoration: none; width: 16px; display: inline-block;
+										background-color: #eee; border-radius: 5px; text-align: center; }
+#doc_tree ul > li > a.tree_icon:hover	{ background-color: #ccc; }
+#doc_tree ul > li > a.tree_label 		{ cursor: pointer; }
+#doc_tree ul > li > a.tree_dropzone	 	{ background-color: #eee; border-radius: 5px; }
+
+#doc_tree ul > li.tree_exp  > a.tree_icon:before		{ content: "\2212"; }
+#doc_tree ul > li.tree_ctr  > a.tree_icon:before		{ content: "\002B"; }
+#doc_tree ul > li.tree_leaf > a.tree_icon:before		{ content: "#"; }
+#doc_tree ul > li.tree_ctr > ul		{ display: none; }
+
 
 #edit_area #doc_content		{
 								background-color: #FFFFFF; border: 1px solid black;
 								box-shadow: 0 1px 1px rgba(0, 0, 0, 0.075) inset;
 								transition: border 0.2s linear 0s, box-shadow 0.2s linear 0s;
-								padding: 4px;
+								padding: 4px; margin-top: 10px;
 							}
+
+#edit_area.doc_edited 		{ background-color: red; }
 
 		</style>
 	</head>
@@ -54,10 +63,11 @@ a#status.replicating		{ color: blue; }
 	
 				<div class="collapse navbar-collapse" id="fastdox-navbar-collapse">
 					<ul class="nav navbar-nav">
-						<li id="menu_index" ><a href="#">Index</a></li>
 						<li id="menu_create"><a href="#">Create</a></li>
+<!--
 						<li id="menu_delete"><a href="#">Delete</a></li>
 						<li id="menu_forget"><a href="#">Forget Local Changes</a></li>
+-->
 					</ul>
 					<ul class="nav navbar-nav pull-right">
 						<li id="css_message" class="navbar-text">starting</li>
@@ -66,54 +76,59 @@ a#status.replicating		{ color: blue; }
 				</div>
 			</div>
 		</nav>
-		<div id="view_area" class="css_hide">
-			<div id="doc_content"></div>
-			<br/>
-			<button id="doc_edit"   class="btn btn-small btn-primary">Edit</button>
-		</div>
-		<div id="edit_area" class="css_hide">
-			<h1><input id="doc_title" size="50" type="text"/></h1>
-			<div id="doc_content" contenteditable="true"></div>
-			<br/>
-			<button id="doc_save"   class="btn btn-small btn-primary">Save</button>
-			<button id="doc_cancel" class="btn btn-small"            >Cancel</button>
-		</div>
-		<div id="index_area" class="css_hide">
-			<h1>Index</h1>
-			<table class="table table-condensed table-hover table-striped table-responsive">
-				<thead>
-					<tr>
-						<th class='sel'><span class='glyphicon glyphicon-ok'></span></th>
-						<th>Title / Content</th>
-						<th>Status</th>
-						<th>Info</th>
-					</tr>
-				</thead>
-				<tbody>
-				</tbody>
-			</table>
-		</div>
-<!--
-		<script type="text/javascript" src="/rsl_shared/style/jquery.core/jquery-1.11.0.min.js"></script>
--->
-		<script type="text/javascript" src="/rsl_shared/style/jquery.ui/js/jquery-1.7.2.min.js"></script>
-		<script type="text/javascript" src="/rsl_shared/style/bootstrap-3.1.1-dist/js/bootstrap.min.js"></script>
+		
+		<div class="row">
+			<div class="col-md-4" id="left_area">
+				<h2>Navigator</h2>
+				<div id="doc_tree">
+				</div>
+			</div>
+
+			<div class="col-md-8" id="right_area">
+				<div id="view_area" class="css_hide">
+					<h2>View</h2>
+					<div id="doc_view">
+					</div>
+				</div>
+				<div id="edit_area" class="css_hide">
+					<h2>Create</h2>
+					<form role="form">
+						<div class="form-group">
+							<div class="row">
+								<div class="col-md-6"><input id="doc_path"  class="form-control" type="text" placeholder="path" /></div>
+								<div class="col-md-6"><input id="doc_title" class="form-control" type="text" placeholder="title"/></div>
+							</div>
+							<div id="doc_content" contenteditable="true"></div>
+							<br/>
+							<button id="doc_save"   class="btn btn-small btn-primary">Save</button>
+							<button id="doc_cancel" class="btn btn-small"            >Cancel</button>
+				</div>
+			</div>
+		</div>		
+		
+		<script type="text/javascript" src="/cdn/jquery-v1.7.2/jquery-1.7.2.min.js"></script>
+		<script type="text/javascript" src="/cdn/twitter-bootstrap-v3.1.1/js/bootstrap.min.js"></script>
 		<script type="text/javascript" src="cli_js/uuid.core.js"></script>
+<!--
+		<script type="text/javascript" src="cli_js/base.js"></script>
+-->
 		<script type="text/javascript" src="cli_js/master.js"></script>
 
 		<script type="text/javascript">
 			$(document).ready(function() {
-				y.startApp(y.start);
+				y.ui.using = y.ui.couch;
+				y.ui.using.startApp();
 		        var textarea = $("#edit_area #doc_content");
 			    Aloha.ready(function() {
 			        Aloha.jQuery(textarea).aloha();
 			    });
 			});
 			$(document).on("click", "#menu_create", function(event) {
-				y.renderCreate();
+				y.ui.using.renderCreate();
 			});
+/*
 			$(document).on("click", "#menu_index" , function(event) {
-				y.renderIndex();
+				y.ui.using.renderIndex();
 			});
 			$(document).on("click", "#menu_forget", function(event) {
 		        var count = 0,
@@ -123,38 +138,113 @@ a#status.replicating		{ color: blue; }
 		        }
 		        $("tr.info").each(function () {
 		        	y.getDoc($(this).attr("docKey"), function (doc_obj) {
-		       	 		count += (y.forgetLocalChanges(doc_obj) ? 1 : 0);
+		       	 		count += (y.ui.using.forgetLocalChanges(doc_obj) ? 1 : 0);
 		            });
 		        });
 		        alert(count + " conflict documents reverted");
 			});
 			$(document).on("click", "#doc_edit"   , function(event) {
-				y.renderEdit();
+				y.ui.using.renderEdit();
 			});
+*/
 			$(document).on("click", "#doc_save"   , function(event) {
-				y.saveDoc();
+				y.ui.using.saveDoc();
 			});
 			$(document).on("click", "#doc_cancel" , function(event) {
-				if (y.current_doc) {
-					y.renderView();
-				} else {				// cancelling from Create...
-					y.renderIndex();
-				}
 			});
 
+
+			$(document).on("click", "div#doc_tree ul > li > a.tree_icon", function () {
+			    var parent_li = $(this).parent();
+			    if (parent_li.hasClass("tree_exp")) {
+			        parent_li.removeClass("tree_exp");
+			        parent_li.   addClass("tree_ctr");
+			    } else {
+			        parent_li.   addClass("tree_exp");
+			        parent_li.removeClass("tree_ctr");
+			    }
+			});
+	
+			$(document).on("click", "div#doc_tree ul > li:not(.tree_leaf) > a.tree_label", function () {
+			    var node = $(this).parent(),
+			        path = "";
+			
+			    do {
+			        path = "/" + node.attr("id") + path;
+			        node = node.parent("ul").parent("li");
+			    } while (node.length > 0);
+			    y.ui.using.log("opening folder: " + path);
+			    y.ui.using.renderView(path);
+			});
+			
+			$(document).on("click", "div#doc_tree li.tree_leaf > a.tree_label", function () {
+			    var doc_id = $(this).parent().attr("id");
+			    y.ui.using.log("opening: " + doc_id);
+			    y.ui.using.renderUpdate(doc_id);
+			});
+
+			$(document).on("dragstart", "div#doc_tree li", function (e) {
+    			//drag_event = event.target;
+    			y.ui.using.dragging_node = $(event.target);
+//			    event.dataTransfer.effectAllowed = 'move';
+//    			event.dataTransfer.setData("id", "SDF");
+			});
+
+			$(document).on("dragenter", "div#doc_tree li.tree_branch > a.tree_label", function (event) {
+				$(this).addClass("tree_dropzone");
+  				return false;
+			});
+
+			$(document).on("dragover" , "div#doc_tree li.tree_branch > a.tree_label", function (event) {
+  				if (event.preventDefault) {
+    				event.preventDefault();
+  				}
+				event.originalEvent.dataTransfer.dropEffect = 'move';
+  				return false;
+			});
+
+			$(document).on("dragleave", "div#doc_tree li.tree_branch > a.tree_label", function (event) {
+				$(this).removeClass("tree_dropzone");
+  				return false;
+			});
+
+			$(document).on("dragend"  , "div#doc_tree li"                           , function (event) {
+    			y.ui.using.dragging_node = null;
+  				return false;
+  			});
+
+			$(document).on("drop"     , "div#doc_tree li.tree_branch > a.tree_label", function (event) {
+				var id    = y.ui.using.dragging_node.attr("id"),
+					label = y.ui.using.dragging_node.children("a.tree_label").text();
+
+				if (event.preventDefault) {
+					event.preventDefault();
+				}
+  				if (event.stopPropagation) {
+  					event.stopPropagation();
+  				}
+				$(this).removeClass("tree_dropzone");
+				y.ui.using.createTreeNode($(this).parent(), id, label, true);
+				y.ui.using.removeTreeNode(y.ui.using.dragging_node);
+				y.ui.using.dragging_node = null;
+//				alert("moving node " + y.ui.using.dragging_node.attr("id") + " to " + $(this).parent().attr("id"));
+  				return false;
+			});
+
+/*
 // Multi-row Selection
-			$(document).on("mousedown", "td.sel"  , function(event) {
-				y.mouse_down     = true;
-				y.mouse_deselect = $(this).parent().hasClass("info");
+			$(document).on("mousedown", "td.sel"  , function (event) {
+				y.ui.using.mouse_down     = true;
+				y.ui.using.mouse_deselect = $(this).parent().hasClass("info");
 				mouseoverRow(this);
 				return false;
 			});
-			$(document).on("mouseover", "td.sel"  , function(event) {
-				if (y.mouse_down) {
+			$(document).on("mouseover", "td.sel"  , function (event) {
+				if (y.ui.using.mouse_down) {
 					mouseoverRow(this);
 				}
 			});
-			$(document).on("mouseup"              , function(event) {
+			$(document).on("mouseup"              , function (event) {
 				var count_selected = $("#index_area > table > tbody > tr.info").length;
 				if (count_selected === 0) {
 			        $("#menu_delete").   addClass("disabled");
@@ -163,24 +253,28 @@ a#status.replicating		{ color: blue; }
 			        $("#menu_delete").removeClass("disabled");
 			        $("#menu_forget").removeClass("disabled");
 				}
-				y.mouse_down = false;
+				y.ui.using.mouse_down = false;
 			});
 			function mouseoverRow(row) {
-				if (y.mouse_deselect) {
+				if (y.ui.using.mouse_deselect) {
 					$(row).parent().removeClass("info");
 				} else {
 					$(row).parent().   addClass("info");
 				}
 			}
-			$(document).on("click", "td.sel"     , function(event) {
+			$(document).on("click", "td.sel"     , function (event) {
 				return false;
 			});
-			$(document).on("click", "tr[docKey]" , function(event) {
-				y.renderView($(this).attr("docKey"));
+			$(document).on("click", "tr[docKey]" , function (event) {
+				y.ui.using.renderView($(this).attr("docKey"));
 			});
-//			$(document).on("hover", "tr"         , function(event) {
+//			$(document).on("hover", "tr"         , function (event) {
 //				alert("hover on tr");
 //			});
+*/
+			$(document).on("keyup" , "#doc_content", function (event) {
+				$("#edit_area").addClass("doc_edited");
+			});
 
 	        Aloha = window.Aloha || {};
 	        Aloha.settings = Aloha.settings || {};
@@ -199,7 +293,7 @@ a#status.replicating		{ color: blue; }
 	        };
 			
 		</script>
-		<script type="text/javascript" src="/rsl_shared/style/alohaeditor-0.25.2/aloha/lib/require.js"> </script>
-		<script type="text/javascript" src="/rsl_shared/style/alohaeditor-0.25.2/aloha/lib/aloha-full.min.js"> </script>
+		<script type="text/javascript" src="/cdn/alohaeditor-v0.25.2/aloha/lib/require.js"> </script>
+		<script type="text/javascript" src="/cdn/alohaeditor-v0.25.2/aloha/lib/aloha-full.min.js"> </script>
 	</body>
 </html>
