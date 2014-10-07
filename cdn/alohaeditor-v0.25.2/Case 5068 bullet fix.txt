@@ -1,0 +1,74 @@
+Case 5068 :
+When using Aloha, hit the bullet point button affect all the list instead of the selected a lines.
+This fix split an unsorted list and put the selected points into a paragraph.
+
+Just replace the transformListToParagraph function l.73719 in aloha-full.js by the following :
+
+        /**
+        * Transforms a list into paragraphs
+        * @param Dom domToTransform element to transform
+        * @param String listElement the list element to transform (li, dt, dd)
+        */
+        transformListToParagraph: function (domToTransform, listElement) {
+            
+            var newPara;
+            var jqToTransform = jQuery(domToTransform);
+
+            if(jqToTransform.context.nodeName !== "UL") {
+                jQuery.each(jqToTransform.children(listElement), function (index, el) {
+                    newPara = Aloha.Markup.transformDomObject(el, 'p', Aloha.Selection.rangeObject);
+                    // if any lists are in the paragraph, move the to after the paragraph
+                    newPara.after(newPara.children('ol,ul,dl'));
+                    Engine.ensureContainerEditable(newPara.get(0));
+                });
+                // unwrap the elements (remove the enclosing list)
+                jqToTransform.children().unwrap();
+            } else {
+                // we are in an unordered list and shall transform it to paragraphs
+                
+                var prevUl = jQuery('<ul></ul>') ;
+                var nextUl = jQuery('<ul></ul>') ;
+
+                var selLi = Aloha.getSelection().getRangeAt(0).getNodes();
+                if (selLi.length == 0){
+                    //single line selection
+                    selLi = Aloha.getSelection().getRangeAt(0).endContainer.parentNode;
+                    while (selLi.tagName !== 'LI')
+                        selLi = selLi.parentNode
+                    selLi = [selLi]
+                }
+
+                // filter to get only 'li' elements
+                selLi = jQuery.grep(selLi, function( a ) {
+                    return a.localName === 'li';
+                })
+
+                // put 'li' elements before/after selection to new nodes
+                jQuery(selLi).first().prevAll('li').each(function() {
+                    jQuery(this).prependTo(prevUl) ;
+                }) ;
+                jQuery(selLi).last().nextAll('li').each(function() {
+                    jQuery(this).appendTo(nextUl) ;
+                }) ;
+                
+                // insert new ul nodes before and after selection if not empty
+                if(prevUl.children().length){
+                    jQuery(prevUl).insertBefore(jqToTransform);
+                }
+                if(nextUl.children().length){
+                    jQuery(nextUl).insertAfter(jqToTransform);
+                }
+
+                // unwrap the li (remove the enclosing ul) and change the tags
+                jQuery(selLi).unwrap();
+                jQuery(selLi).each(function() {
+                    Engine.ensureContainerEditable(this);
+                    jQuery(this).replaceWith(jQuery('<p>' + this.innerHTML + '</p>'));
+                }) ;
+            }
+        }, 
+        
+        
+
+Then go to http://jscompress.com/ and upload a file to compress.
+After processing copy the output in aloha-full.min.js 
