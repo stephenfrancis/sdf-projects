@@ -23,9 +23,11 @@ a#status.offline			{ color: red; }
 a#status.replicating		{ color: blue; }
 
 #doc_tree li > div	{ display: inline; }
-#doc_tree ul 					 { list-style-type: none; padding-left: 24px; }
-#doc_tree ul > li.tree_leaf		 {}
-#doc_tree ul > li > a.tree_icon	 { cursor: pointer; font-weight: bold; margin-right: 4px; text-decoration: none; width: 16px; display: inline-block;
+#doc_tree ul 					{ list-style-type: none; padding-left: 24px; }
+#doc_tree ul li				 	{ margin-top: 4px; }
+#doc_tree ul li.tree_dropzone	{ border-top: 4px solid #eee; }
+#doc_tree ul li.tree_leaf		{}
+#doc_tree ul li > a.tree_icon	{ cursor: pointer; font-weight: bold; margin-right: 4px; text-decoration: none; width: 16px; display: inline-block;
 										background-color: #eee; border-radius: 5px; text-align: center; }
 #doc_tree ul > li > a.tree_icon:hover	{ background-color: #ccc; }
 #doc_tree ul > li > a.tree_label 		{ cursor: pointer; }
@@ -33,18 +35,17 @@ a#status.replicating		{ color: blue; }
 
 #doc_tree ul > li.tree_exp  > a.tree_icon:before		{ content: "\2212"; }
 #doc_tree ul > li.tree_ctr  > a.tree_icon:before		{ content: "\002B"; }
-#doc_tree ul > li.tree_leaf > a.tree_icon:before		{ content: "#"; }
-#doc_tree ul > li.tree_ctr > ul		{ display: none; }
+#doc_tree ul > li.tree_empt > a.tree_icon:before		{ content: "O"; }
+#doc_tree ul > li.tree_leaf > a.tree_icon:before		{ content: "\2263"; }
+#doc_tree ul > li.tree_ctr  > ul		{ display: none; }
 
 
-#edit_area #doc_content		{
+#doc_area #doc_content		{
 								background-color: #FFFFFF; border: 1px solid black;
 								box-shadow: 0 1px 1px rgba(0, 0, 0, 0.075) inset;
 								transition: border 0.2s linear 0s, box-shadow 0.2s linear 0s;
 								padding: 4px; margin-top: 10px;
 							}
-
-#edit_area.doc_edited 		{ background-color: red; }
 
 		</style>
 	</head>
@@ -63,9 +64,9 @@ a#status.replicating		{ color: blue; }
 	
 				<div class="collapse navbar-collapse" id="fastdox-navbar-collapse">
 					<ul class="nav navbar-nav">
-						<li id="menu_create"><a href="#">Create</a></li>
+						<li id="menu_create_folder"><a href="#">Create a new Folder</a></li>
+						<li id="menu_create_doc"   ><a href="#">Create a new Document</a></li>
 <!--
-						<li id="menu_delete"><a href="#">Delete</a></li>
 						<li id="menu_forget"><a href="#">Forget Local Changes</a></li>
 -->
 					</ul>
@@ -79,30 +80,30 @@ a#status.replicating		{ color: blue; }
 		
 		<div class="row">
 			<div class="col-md-4" id="left_area">
-				<h2>Navigator</h2>
+				<h3>Navigator</h3>
 				<div id="doc_tree">
 				</div>
 			</div>
 
 			<div class="col-md-8" id="right_area">
-				<div id="view_area" class="css_hide">
-					<h2>View</h2>
+
+				<div id="doc_area" class="css_hide">
+					<h1>
+						<input type="text" id="doc_title" placeholder="Title" />
+						<button id="doc_delete" class="btn btn-sm btn-danger">Delete</button>
+						<span id="change_buttons" class="css_hide">
+							<button id="doc_save"   class="btn btn-sm btn-primary">Save</button>
+							<button id="doc_cancel" class="btn btn-sm"            >Cancel</button>
+						</span>
+					</h1>
+
+					<div id="doc_info" class="small text-muted">
+					</div>
 					<div id="doc_view">
 					</div>
+					<div id="doc_content" contenteditable="true"></div>
 				</div>
-				<div id="edit_area" class="css_hide">
-					<h2>Create</h2>
-					<form role="form">
-						<div class="form-group">
-							<div class="row">
-								<div class="col-md-6"><input id="doc_path"  class="form-control" type="text" placeholder="path" /></div>
-								<div class="col-md-6"><input id="doc_title" class="form-control" type="text" placeholder="title"/></div>
-							</div>
-							<div id="doc_content" contenteditable="true"></div>
-							<br/>
-							<button id="doc_save"   class="btn btn-small btn-primary">Save</button>
-							<button id="doc_cancel" class="btn btn-small"            >Cancel</button>
-				</div>
+
 			</div>
 		</div>		
 		
@@ -112,45 +113,36 @@ a#status.replicating		{ color: blue; }
 <!--
 		<script type="text/javascript" src="cli_js/base.js"></script>
 -->
-		<script type="text/javascript" src="cli_js/master.js"></script>
+		<script type="text/javascript" src="cli_js/ui.js"></script>
+		<script type="text/javascript" src="cli_js/store.js"></script>
+		<script type="text/javascript" src="cli_js/remote.js"></script>
 
 		<script type="text/javascript">
 			$(document).ready(function() {
-				y.ui.using = y.ui.couch;
-				y.ui.using.startApp();
+				x.ui.using = x.ui;
+				x.ui.using.start();
 		        var textarea = $("#edit_area #doc_content");
 			    Aloha.ready(function() {
 			        Aloha.jQuery(textarea).aloha();
 			    });
 			});
-			$(document).on("click", "#menu_create", function(event) {
-				y.ui.using.renderCreate();
+			$(document).on("click", "#menu_create_folder", function(event) {
+				x.ui.using.renderCreate("folder");
 			});
-/*
-			$(document).on("click", "#menu_index" , function(event) {
-				y.ui.using.renderIndex();
+			$(document).on("click", "#menu_create_doc"   , function(event) {
+				x.ui.using.renderCreate("doc");
 			});
-			$(document).on("click", "#menu_forget", function(event) {
-		        var count = 0,
-		        	okay = confirm("Forget local changes of selected docs?");
-		        if (!okay) {
-		        	return;
-		        }
-		        $("tr.info").each(function () {
-		        	y.getDoc($(this).attr("docKey"), function (doc_obj) {
-		       	 		count += (y.ui.using.forgetLocalChanges(doc_obj) ? 1 : 0);
-		            });
-		        });
-		        alert(count + " conflict documents reverted");
-			});
-			$(document).on("click", "#doc_edit"   , function(event) {
-				y.ui.using.renderEdit();
-			});
-*/
 			$(document).on("click", "#doc_save"   , function(event) {
-				y.ui.using.saveDoc();
+				x.ui.using.saveDoc();
 			});
 			$(document).on("click", "#doc_cancel" , function(event) {
+				x.ui.using.current_doc = null;
+				x.ui.using.setRightArea(false);
+			});
+			$(document).on("click", "#doc_delete" , function(event) {
+				x.ui.using.deleteLocalDoc();
+				x.ui.using.current_doc = null;
+				x.ui.using.setRightArea(false);
 			});
 
 
@@ -165,37 +157,31 @@ a#status.replicating		{ color: blue; }
 			    }
 			});
 	
-			$(document).on("click", "div#doc_tree ul > li:not(.tree_leaf) > a.tree_label", function () {
-			    var node = $(this).parent(),
-			        path = "";
-			
-			    do {
-			        path = "/" + node.attr("id") + path;
-			        node = node.parent("ul").parent("li");
-			    } while (node.length > 0);
-			    y.ui.using.log("opening folder: " + path);
-			    y.ui.using.renderView(path);
-			});
-			
-			$(document).on("click", "div#doc_tree li.tree_leaf > a.tree_label", function () {
-			    var doc_id = $(this).parent().attr("id");
-			    y.ui.using.log("opening: " + doc_id);
-			    y.ui.using.renderUpdate(doc_id);
+			$(document).on("click", "div#doc_tree ul > li > a.tree_label", function () {
+			    var node = $(this).parent();
+			    x.ui.using.log("opening doc: " + node.attr("id"));
+			    x.ui.using.renderUpdate(node.attr("id"));
 			});
 
 			$(document).on("dragstart", "div#doc_tree li", function (e) {
     			//drag_event = event.target;
-    			y.ui.using.dragging_node = $(event.target);
+    			x.ui.using.dragging_node      = $(event.target);
 //			    event.dataTransfer.effectAllowed = 'move';
 //    			event.dataTransfer.setData("id", "SDF");
 			});
 
 			$(document).on("dragenter", "div#doc_tree li.tree_branch > a.tree_label", function (event) {
+				event.originalEvent.dataTransfer.dropEffect = 'move';
+				$(this).addClass("tree_dropzone");
+  				return false;
+			});
+			$(document).on("dragenter", "div#doc_tree li.tree_branch", function (event) {
+				event.originalEvent.dataTransfer.dropEffect = 'move';
 				$(this).addClass("tree_dropzone");
   				return false;
 			});
 
-			$(document).on("dragover" , "div#doc_tree li.tree_branch > a.tree_label", function (event) {
+			$(document).on("dragover" , "div#doc_tree li.tree_branch", function (event) {
   				if (event.preventDefault) {
     				event.preventDefault();
   				}
@@ -207,15 +193,21 @@ a#status.replicating		{ color: blue; }
 				$(this).removeClass("tree_dropzone");
   				return false;
 			});
+			$(document).on("dragleave", "div#doc_tree li.tree_branch", function (event) {
+				$(this).removeClass("tree_dropzone");
+  				return false;
+			});
 
 			$(document).on("dragend"  , "div#doc_tree li"                           , function (event) {
-    			y.ui.using.dragging_node = null;
+    			x.ui.using.dragging_node      = null;
   				return false;
   			});
 
-			$(document).on("drop"     , "div#doc_tree li.tree_branch > a.tree_label", function (event) {
-				var id    = y.ui.using.dragging_node.attr("id"),
-					label = y.ui.using.dragging_node.children("a.tree_label").text();
+			$(document).on("drop"     , "div#doc_tree li.tree_branch", function (event) {
+				var node  = x.ui.using.dragging_node,
+					new_parent = $(this);
+
+				alert("moving node " + node.attr("id") + " (" + node.children("a.tree_label").text() + ") to " + new_parent.attr("id") + " (" + new_parent.children("a.tree_label").text() + ")");
 
 				if (event.preventDefault) {
 					event.preventDefault();
@@ -223,58 +215,30 @@ a#status.replicating		{ color: blue; }
   				if (event.stopPropagation) {
   					event.stopPropagation();
   				}
-				$(this).removeClass("tree_dropzone");
-				y.ui.using.createTreeNode($(this).parent(), id, label, true);
-				y.ui.using.removeTreeNode(y.ui.using.dragging_node);
-				y.ui.using.dragging_node = null;
-//				alert("moving node " + y.ui.using.dragging_node.attr("id") + " to " + $(this).parent().attr("id"));
+				new_parent.removeClass("tree_dropzone");
+				x.ui.using.moveTreeNode(new_parent, node);
+				x.store.setDocParent(node.attr("id"), new_parent.attr("id"));
+				x.ui.using.dragging_node = null;
   				return false;
 			});
 
-/*
-// Multi-row Selection
-			$(document).on("mousedown", "td.sel"  , function (event) {
-				y.ui.using.mouse_down     = true;
-				y.ui.using.mouse_deselect = $(this).parent().hasClass("info");
-				mouseoverRow(this);
-				return false;
-			});
-			$(document).on("mouseover", "td.sel"  , function (event) {
-				if (y.ui.using.mouse_down) {
-					mouseoverRow(this);
-				}
-			});
-			$(document).on("mouseup"              , function (event) {
-				var count_selected = $("#index_area > table > tbody > tr.info").length;
-				if (count_selected === 0) {
-			        $("#menu_delete").   addClass("disabled");
-			        $("#menu_forget").   addClass("disabled");
+			$(document).on("keyup" , "#doc_title", function (event) {
+				if (x.ui.isCurrentDocModified()) {
+					$("#change_buttons").removeClass("css_hide");
 				} else {
-			        $("#menu_delete").removeClass("disabled");
-			        $("#menu_forget").removeClass("disabled");
+					$("#change_buttons").   addClass("css_hide");
 				}
-				y.ui.using.mouse_down = false;
 			});
-			function mouseoverRow(row) {
-				if (y.ui.using.mouse_deselect) {
-					$(row).parent().removeClass("info");
-				} else {
-					$(row).parent().   addClass("info");
-				}
-			}
-			$(document).on("click", "td.sel"     , function (event) {
-				return false;
-			});
-			$(document).on("click", "tr[docKey]" , function (event) {
-				y.ui.using.renderView($(this).attr("docKey"));
-			});
-//			$(document).on("hover", "tr"         , function (event) {
-//				alert("hover on tr");
-//			});
-*/
+
 			$(document).on("keyup" , "#doc_content", function (event) {
-				$("#edit_area").addClass("doc_edited");
+				if (x.ui.isCurrentDocModified()) {
+					$("#change_buttons").removeClass("css_hide");
+				} else {
+					$("#change_buttons").   addClass("css_hide");
+				}
 			});
+
+
 
 	        Aloha = window.Aloha || {};
 	        Aloha.settings = Aloha.settings || {};
