@@ -141,12 +141,13 @@ x.store.getChildDocs = function (store_id, uuid) {
         var tx = that.db.transaction(store_id, "readonly"),
             store = tx.objectStore(store_id),
             request = store.openCursor();
+//            request = store.index("by_parent").openKeyCursor([ uuid ]);
 
         request.onsuccess = function () {
             var cursor = request.result;
             if (cursor) {
                 // Called for each matching record.
-                if (cursor.value.parent_id && cursor.value.parent_id === uuid) {
+                if (cursor.value && cursor.value.parent_id === uuid) {
                     results.push(cursor.value);
                 }
                 cursor["continue"]();

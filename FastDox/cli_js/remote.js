@@ -555,7 +555,7 @@ x.remote.couch.replicationReset = function () {
                 results[i].last_replication_point = null;
             }
             promise.then(
-            x.store.storeDoc("dox", results[i])
+                x.store.storeDoc("dox", results[i])
             );
         }
     })

@@ -134,10 +134,10 @@ x.ui.displayFolderContent = function (parent_elem, uuid, concat_label, nodes_don
         var i,
             heading_level = (level_depth < 3 ? level_depth + 2 : 4),
             child_elem;
-        for (i = 0; results.length; i += 1) {
+        for (i = 0; i < results.length; i += 1) {
             parent_elem.append("<div/>");
              child_elem = parent_elem.children("div").last();
-             child_elem.append("<h" + heading_level + ">" + concat_label + " " + results[i].title + "</h" + heading_level + ">");
+             child_elem.append("<h" + heading_level + ">" + concat_label + (i + 1) + " " + results[i].title + "</h" + heading_level + ">");
             if (results[i].content) {
                 child_elem.append(results[i].content);
                 number_output += 1;
