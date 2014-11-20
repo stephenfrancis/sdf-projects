@@ -220,61 +220,6 @@ x.ui.saveDoc = function () {
 };
 
 
-x.ui.createTreeNode = function (parent_node, id, label, draggable, force_folder) {
-    var out;
-//    this.log("createTreeNode(): " + parent_node.length + ", " + id + ", " + label);
-    out = "<li id='" + id + "' class=";
-    if (force_folder === true) {
-        out += "'tree_empt tree_branch'";
-    } else {
-        out += "'tree_leaf'";
-    }
-    if (draggable === true) {
-        out += " draggable='true'";
-    }
-    out += "><a class='tree_icon' /><a class='tree_label'>" + label + "</a></li>";
-    return this.addTreeNode(parent_node, out);
-};
-
-x.ui.addTreeNode = function (parent_node, content) {
-    if (parent_node.length !== 1) {
-        throw new Error("createTreeNode(): parent_node must be single-valued");
-    }
-    if (parent_node[0].tagName === "LI" /*&& parent_node.children("a.tree_icon").length === 0*/) {
-        parent_node.   addClass("tree_exp");
-        parent_node.   addClass("tree_branch");
-        parent_node.removeClass("tree_leaf");
-        parent_node.removeClass("tree_empt");
-    }
-    if (parent_node.children("ul").length === 0) {
-        parent_node.append("<ul/>");
-    }
-    parent_node = parent_node.children("ul").first();           // should only be one
-    parent_node.append(content);
-    return parent_node.children("li").last();
-};
-
-x.ui.removeTreeNode = function (node_id) {
-    var node = $("#doc_tree #" + node_id);
-    this.log("removeTreeNode(): " + node_id + ", nodes matched: " + node.length);
-    if (node.length !== 1 || node[0].tagName !== "LI") {
-        throw new Error("invalid tree node");
-    }
-    node.remove();
-    if (node.parent().children("li").length === 0) {
-//        node.parent().parent().removeClass("tree_branch");
-        node.parent().parent().removeClass("tree_exp");
-        node.parent().parent().removeClass("tree_ctr");
-        node.parent().parent().   addClass("tree_empt");
-        node.parent().remove();
-    }
-};
-
-
-x.ui.moveTreeNode = function (new_parent_elem, node_elem) {
-    this.addTreeNode(new_parent_elem, node_elem.detach());
-};
-
 
 x.ui.drawTreeNode = function (node_id, parent_elem) {
     var that = this;

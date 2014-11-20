@@ -22,24 +22,6 @@ a#status.online				{ color: green; }
 a#status.offline			{ color: red; }
 a#status.replicating		{ color: blue; }
 
-#doc_tree li > div	{ display: inline; }
-#doc_tree ul 					{ list-style-type: none; padding-left: 24px; }
-#doc_tree ul li				 	{ margin-top: 4px; }
-#doc_tree ul li.tree_dropzone	{ border-top: 4px solid #eee; }
-#doc_tree ul li.tree_leaf		{}
-#doc_tree ul li > a.tree_icon	{ cursor: pointer; font-weight: bold; margin-right: 4px; text-decoration: none; width: 16px; display: inline-block;
-										background-color: #eee; border-radius: 5px; text-align: center; }
-#doc_tree ul > li > a.tree_icon:hover	{ background-color: #ccc; }
-#doc_tree ul > li > a.tree_label 		{ cursor: pointer; }
-#doc_tree ul > li > a.tree_dropzone	 	{ background-color: #eee; border-radius: 5px; }
-
-#doc_tree ul > li.tree_exp  > a.tree_icon:before		{ content: "\2212"; }
-#doc_tree ul > li.tree_ctr  > a.tree_icon:before		{ content: "\002B"; }
-#doc_tree ul > li.tree_empt > a.tree_icon:before		{ content: "O"; }
-#doc_tree ul > li.tree_leaf > a.tree_icon:before		{ content: "\2263"; }
-#doc_tree ul > li.tree_ctr  > ul		{ display: none; }
-
-
 #doc_area #doc_content		{
 								background-color: #FFFFFF; border: 1px solid black;
 								box-shadow: 0 1px 1px rgba(0, 0, 0, 0.075) inset;
@@ -81,7 +63,7 @@ a#status.replicating		{ color: blue; }
 		<div class="row">
 			<div class="col-md-4" id="left_area">
 				<h3>Navigator</h3>
-				<div id="doc_tree">
+				<div id="doc_tree" class="tree">
 				</div>
 			</div>
 
@@ -146,81 +128,6 @@ a#status.replicating		{ color: blue; }
 			});
 
 
-			$(document).on("click", "div#doc_tree ul > li > a.tree_icon", function () {
-			    var parent_li = $(this).parent();
-			    if (parent_li.hasClass("tree_exp")) {
-			        parent_li.removeClass("tree_exp");
-			        parent_li.   addClass("tree_ctr");
-			    } else {
-			        parent_li.   addClass("tree_exp");
-			        parent_li.removeClass("tree_ctr");
-			    }
-			});
-	
-			$(document).on("click", "div#doc_tree ul > li > a.tree_label", function () {
-			    var node = $(this).parent();
-			    x.ui.using.log("opening doc: " + node.attr("id"));
-			    x.ui.using.renderUpdate(node.attr("id"));
-			});
-
-			$(document).on("dragstart", "div#doc_tree li", function (e) {
-    			//drag_event = event.target;
-    			x.ui.using.dragging_node      = $(event.target);
-//			    event.dataTransfer.effectAllowed = 'move';
-//    			event.dataTransfer.setData("id", "SDF");
-			});
-
-			$(document).on("dragenter", "div#doc_tree li.tree_branch > a.tree_label", function (event) {
-				event.originalEvent.dataTransfer.dropEffect = 'move';
-				$(this).addClass("tree_dropzone");
-  				return false;
-			});
-			$(document).on("dragenter", "div#doc_tree li.tree_branch", function (event) {
-				event.originalEvent.dataTransfer.dropEffect = 'move';
-				$(this).addClass("tree_dropzone");
-  				return false;
-			});
-
-			$(document).on("dragover" , "div#doc_tree li.tree_branch", function (event) {
-  				if (event.preventDefault) {
-    				event.preventDefault();
-  				}
-				event.originalEvent.dataTransfer.dropEffect = 'move';
-  				return false;
-			});
-
-			$(document).on("dragleave", "div#doc_tree li.tree_branch > a.tree_label", function (event) {
-				$(this).removeClass("tree_dropzone");
-  				return false;
-			});
-			$(document).on("dragleave", "div#doc_tree li.tree_branch", function (event) {
-				$(this).removeClass("tree_dropzone");
-  				return false;
-			});
-
-			$(document).on("dragend"  , "div#doc_tree li"                           , function (event) {
-    			x.ui.using.dragging_node      = null;
-  				return false;
-  			});
-
-			$(document).on("drop"     , "div#doc_tree li.tree_branch", function (event) {
-				var node  = x.ui.using.dragging_node,
-					new_parent = $(this);
-
-				alert("moving node " + node.attr("id") + " (" + node.children("a.tree_label").text() + ") to " + new_parent.attr("id") + " (" + new_parent.children("a.tree_label").text() + ")");
-
-				if (event.preventDefault) {
-					event.preventDefault();
-				}
-  				if (event.stopPropagation) {
-  					event.stopPropagation();
-  				}
-				new_parent.removeClass("tree_dropzone");
-				x.ui.using.moveTreeNode(new_parent, node);
-				x.store.setDocParent(node.attr("id"), new_parent.attr("id"));
-				x.ui.using.dragging_node = null;
-  				return false;
-			});
 
 			$(document).on("keyup" , "#doc_title", function (event) {
 				if (x.ui.isCurrentDocModified()) {

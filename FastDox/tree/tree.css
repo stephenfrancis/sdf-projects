@@ -1,0 +1,20 @@
+
+.tree						{ display: inline-block; }		/* only take the width of content */
+.tree li > div				{ display: inline; }
+.tree ul 					{ list-style-type: none; padding-left: 24px; }
+.tree ul li.tree_dropzone	{ height: 5px; border-radius: 2px; }
+.tree ul li.active_dropzone	{ background-color: #ccc; }
+.tree ul li.tree_leaf		{}
+.tree ul li > a.tree_icon	{ cursor: pointer; font-weight: bold; margin-right: 4px; text-decoration: none; width: 16px; display: inline-block;
+										background-color: #eee; border-radius: 5px; text-align: center; }
+.tree ul > li > a.tree_icon:hover	{ background-color: #ccc; }
+.tree ul > li > a.tree_label 		{ cursor: pointer; }
+.tree ul > li > a.tree_remove		{ display: none; text-decoration: none; font-weight: bold; }
+.tree ul > li:hover > a.tree_remove		{ display: inline; cursor: pointer; }
+
+.tree ul > li.tree_exp  > a.tree_icon:before		{ content: "\2212"; }
+.tree ul > li.tree_ctr  > a.tree_icon:before		{ content: "\002B"; }
+.tree ul > li.tree_empt > a.tree_icon:before		{ content: "O"; }
+.tree ul > li.tree_leaf > a.tree_icon:before		{ content: "\2263"; }
+.tree ul > li.tree_ctr  > ul		{ display: none; }
+
