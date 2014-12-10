@@ -9,7 +9,7 @@
 										background-color: #eee; border-radius: 5px; text-align: center; }
 .tree ul > li > a.tree_icon:hover	{ background-color: #ccc; }
 .tree ul > li > a.tree_label 		{ cursor: pointer; }
-.tree ul > li > a.tree_remove		{ display: none; text-decoration: none; font-weight: bold; }
+.tree ul > li > a.tree_remove		{ display: none; text-decoration: none; font-weight: bold; font-size: 12pt; line-height: 10pt; }
 .tree ul > li:hover > a.tree_remove		{ display: inline; cursor: pointer; }
 
 .tree ul > li.tree_exp  > a.tree_icon:before		{ content: "\2212"; }

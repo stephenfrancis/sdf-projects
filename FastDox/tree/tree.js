@@ -9,6 +9,12 @@ x.ui.tree = x.ui.tree || {};
 // x.ui.tree.removeNode(node)
 // x.ui.tree.moveNode(node, new_parent_node)
 
+
+x.ui.tree.createTree = function (parent_node, id) {
+    parent_node.append("<ul class='tree'><li id='root' class='tree_branch tree_empt'><a class='tree_icon' /><a class='tree_label'>Root</a><ul><li class='tree_dropzone' /></ul></li></ul>");
+    return parent_node.children("#root");
+};
+
 x.ui.tree.createNode = function (parent_node, id, label, branch, moveable, deletable) {
     var node;
     if ($(".tree #" + id).length > 0) {
@@ -44,9 +50,9 @@ x.ui.tree.addNode = function (parent_node, content, position) {
     if (typeof parent_node === "string") {
         parent_node = $(".tree #" + parent_node);
     }
-    if (parent_node.length !== 1 || parent_node[0].tagName !== "LI" || !parent_node.hasClass("tree_branch")) {
-        throw new Error("addTreeNode(): parent_node must be single li element with class tree_branch");
-    }
+//    if (parent_node.length !== 1 || parent_node[0].tagName !== "LI" || !parent_node.hasClass("tree_branch")) {
+//        throw new Error("addTreeNode(): parent_node must be single li element with class tree_branch");
+//    }
     parent_node.   addClass("tree_exp");
     parent_node.removeClass("tree_empt");
     parent_node = parent_node.children("ul").first();           // should only be one
@@ -116,12 +122,6 @@ $(document).on("click", ".tree ul > li > a.tree_icon", function () {
         parent_li.   addClass("tree_exp");
         parent_li.removeClass("tree_ctr");
     }
-});
-
-$(document).on("click", ".tree ul > li > a.tree_label", function () {
-    var node = $(this).parent();
-//    x.ui.using.log("opening doc: " + node.attr("id"));
-//    x.ui.using.renderUpdate(node.attr("id"));
 });
 
 $(document).on("click", ".tree ul > li > a.tree_remove", function () {

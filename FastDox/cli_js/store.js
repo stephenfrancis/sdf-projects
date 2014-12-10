@@ -180,20 +180,63 @@ x.store.deleteDoc = function (store_id, doc_obj) {
 };
 
 
-x.store.setDocParent = function (node_id, parent_id) {
+x.store.setDocParent = function (node_id, parent_id, old_parent_id, position) {
     var that = this;
-    that.log("setDocParent(): setting node: " + node_id + " parent to: " + parent_id); 
-    return this.getDoc("dox", node_id)
+    that.log("setDocParent(): setting node: " + node_id + " parent to: " + parent_id);
+    return new Promise(function (resolve, reject) {
+        resolve();
+    })
+    .then(function () {
+        that.log("setDocParent().then(1): is parent_id non-blank?");
+        if (!parent_id) {
+            throw new Error("no new parent_id");             // TODO - allow update to old_parent_id if not also blank
+        }
+    })
+    .then(function () {
+        that.log("setDocParent().then(2): get parent document: " + parent_id);
+        return that.getDoc("dox", parent_id);
+    })
     .then(function (doc_obj) {
-        that.log("setDocParent(): got doc: " + node_id);
-        doc_obj.parent_id = parent_id;
+        that.log("setDocParent().then(3): update parent doc: " + doc_obj.uuid);
+//        doc_obj.parent_id = parent_id;
+        if (!doc_obj.children) {
+            doc_obj.children = [];
+        }
+        if (doc_obj.children.indexOf(node_id) > -1) {
+            doc_obj.children.splice(doc_obj.children.indexOf(node_id), 1);
+        }
+        if (typeof position !== "number") {
+            position = doc_obj.children.length;
+        }
+        that.log("setDocParent(): about to splice, to position: " + position + ", array initial length: " + doc_obj.children.length + ", node_id: " + node_id);
+        doc_obj.children[position] = node_id;
+        return that.storeDoc("dox", doc_obj);
+    })
+    .then(null, /* catch */ function (reason) {
+        that.log("setDocParent().then(4): catch reason: " + reason);
+    })
+    .then(function () {
+        that.log("setDocParent().then(5): is old_parent_id non-blank and <> parent_id?");
+        if (!old_parent_id || parent_id === old_parent_id) {
+            throw new Error("no old_parent_id or === parent_id");             // TODO - allow update to old_parent_id if not also blank
+        }
+    })
+    .then(function () {
+        that.log("setDocParent().then(6): get old parent document");
+        return this.getDoc("dox", old_parent_id);
+    })
+    .then(function (doc_obj) {
+        that.log("setDocParent().then(7): update old parent doc: " + doc_obj.uuid);
+        if (doc_obj.children.indexOf(node_id) > -1) {
+            doc_obj.children.splice(doc_obj.children.indexOf(node_id), 1);
+        }
         return that.storeDoc("dox", doc_obj);
     })
     .then(function () {
-        that.log("setDocParent(): all done!"); 
+        that.log("setDocParent().then(7): all done!"); 
     })
     .then(null, /* catch */ function (reason) {
-        that.log("setDocParent() failed: " + reason);
+        that.log("setDocParent().then(8) failed: " + reason);
     });
 };
 

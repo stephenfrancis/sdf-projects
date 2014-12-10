@@ -15,24 +15,18 @@ x.ui = {
 
 
 x.ui.start = function () {
-    var that = this,
-        promise;
+    var that = this;
 
-    promise = x.store.start()
+    return x.store.start()
     .then(function () {
         that.drawTreeNode("root", $("#doc_tree"));
 //        that.drawWholeTree();
-    });
-    if (x.remote) {
-        promise = promise
-        .then(function () {
+    })
+    .then(function () {
+        if (x.remote) {
             return x.remote.using.replicate();
-        });
-    }
-//    .then(function () {
-//        that.replicate();
-//    })
-    promise
+        }
+    })
     .then(function () {
         that.message("x.ui.start() done");
     })
@@ -206,7 +200,7 @@ x.ui.saveDoc = function () {
         that.orig_title   = doc_obj.title;
         that.orig_content = doc_obj.content;
         if (create) {
-            that.createTreeNode($("#doc_tree #root"), that.current_doc.uuid, that.current_doc.title, true, (that.current_doc.type === "folder"));
+            that.tree.createNode("root", that.current_doc.uuid, that.current_doc.title, (that.current_doc.type === "folder"));
         } else {
             $("#doc_tree #" + that.current_doc.uuid + "> a.tree_label").text(that.current_doc.title);
         }
@@ -221,21 +215,28 @@ x.ui.saveDoc = function () {
 
 
 
-x.ui.drawTreeNode = function (node_id, parent_elem) {
-    var that = this;
+x.ui.drawTreeNode = function (node_id, parent_node) {
+    var that = this,
+        node_elem;
     this.log("beginning drawTreeNode()");
-    x.store.getDoc("dox", node_id)
+    return x.store.getDoc("dox", node_id)
     .then(function (doc_obj) {
-        return that.createTreeNode(parent_elem, doc_obj.uuid, doc_obj.title, true, (doc_obj.type === "folder"));        
+//        parent_node.css("border", "1px solid green");
+//        console.log(parent_node.length + ", " + /*parent_node[0].tagName + ", " +*/ parent_node.hasClass("tree_branch"));
+        node_elem = that.tree.createNode(parent_node, doc_obj.uuid, doc_obj.title, (doc_obj.type === "folder"));
+        return x.store.setDocParent(node_id, doc_obj.parent_id);
     })
-    .then(function (node_elem) {
-        return x.store.getChildDocs("dox", node_id)
-        .then(function (results) {
-            var i;
-            for (i = 0; i < results.length; i += 1) {
-                that.drawTreeNode(results[i].uuid, node_elem);
-            }
+    .then(function () {
+        return x.store.getChildDocs("dox", node_id);
+    })
+    .then(function (results) {
+        var sequence = Promise.resolve();
+        results.forEach(function (child_doc) {
+            sequence = sequence.then(function () {
+                return that.drawTreeNode(child_doc.uuid, node_elem);
+            });
         });
+        return sequence;
     })
     .then(null, /* catch */ function (reason) {
         that.message("save failed for reason: " + reason);
@@ -260,7 +261,7 @@ x.ui.drawWholeTree = function () {
         if (doc) {
 //            that.log("drawWholeTree(): node: " + node_id + " has " + (doc.children ? doc.children.length : 0) + " children");
             delete all_docs[node_id];           // prevent infinite loop on circular reference
-            node = that.createTreeNode(parent_node, doc.uuid, doc.title, true, (doc.type === "folder"));
+            node = that.tree.createTreeNode(parent_node, doc.uuid, doc.title, (doc.type === "folder"));
             for (i = 0; doc.children && i < doc.children.length; i += 1) {
                 drawNode(node, doc.children[i]);
             }
@@ -282,9 +283,9 @@ x.ui.drawWholeTree = function () {
         for (id in all_docs) {
             if (all_docs.hasOwnProperty(id)) {
                 if (!orphan_parent) {
-                    orphan_parent = that.createTreeNode(root_node, "orphan_parent", "Orphaned Nodes", true, true);
+                    orphan_parent = that.tree.createNode(root_node, "orphan_parent", "Orphaned Nodes", true);
                 }
-                that.createTreeNode(orphan_parent, id, all_docs[id].title, true, (all_docs[id].type === "folder"));
+                that.tree.createNode(orphan_parent, id, all_docs[id].title, (all_docs[id].type === "folder"));
             }
         }
     })
@@ -307,7 +308,7 @@ x.ui.deleteLocalDoc = function () {
             that.log("deleteLocalDoc() failed: " + reason);
         });
     }
-    this.removeTreeNode(this.current_doc.uuid);
+    this.tree.removeNode(this.current_doc.uuid);
 };
 
 

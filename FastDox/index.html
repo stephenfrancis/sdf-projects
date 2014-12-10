@@ -9,6 +9,7 @@
 		<meta http-equiv="Content-Type" content="text/html; charset=utf-8" /> 
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 		<link rel="stylesheet" type="text/css" href="/cdn/twitter-bootstrap-v3.1.1/css/bootstrap.min.css" media="screen" />
+		<link rel="stylesheet" type="text/css" href="tree/tree.css" />
 		<link rel="stylesheet" type="text/css" href="/cdn/alohaeditor-v0.25.2/aloha/css/aloha.css" />
 		<style type="text/css">
 body						{ font-family: Arial; }
@@ -64,6 +65,7 @@ a#status.replicating		{ color: blue; }
 			<div class="col-md-4" id="left_area">
 				<h3>Navigator</h3>
 				<div id="doc_tree" class="tree">
+					<ul/>
 				</div>
 			</div>
 
@@ -107,6 +109,17 @@ a#status.replicating		{ color: blue; }
 			    Aloha.ready(function() {
 			        Aloha.jQuery(textarea).aloha();
 			    });
+
+				$(document).on("tree.create", function (event, id, label, branch, draggable) {
+	    			console.log("index.html got event tree.create: " + event.type + ", " + id + ", " + label + ", " + branch + ", " + draggable);
+				});
+
+				$(document).on("tree.move", function (event, node_id, new_parent_id, position) {
+					x.ui.using.log("index.html got move of: " + node_id + " to " + new_parent_id + " at " + position);
+					x.store.setDocParent(node_id, new_parent_id);
+				});
+
+
 			});
 			$(document).on("click", "#menu_create_folder", function(event) {
 				x.ui.using.renderCreate("folder");
@@ -128,6 +141,11 @@ a#status.replicating		{ color: blue; }
 			});
 
 
+			$(document).on("click", ".tree ul > li > a.tree_label", function () {
+			    var node = $(this).parent();
+			    x.ui.using.log("opening doc: " + node.attr("id"));
+			    x.ui.using.renderUpdate(node.attr("id"));
+			});
 
 			$(document).on("keyup" , "#doc_title", function (event) {
 				if (x.ui.isCurrentDocModified()) {
@@ -162,9 +180,10 @@ a#status.replicating		{ color: blue; }
 	            getContents: [ 'blockelement', 'sanitize', 'basic' ],
 	            sanitize: 'relaxed' // relaxed, restricted, basic,
 	        };
-			
+
 		</script>
 		<script type="text/javascript" src="/cdn/alohaeditor-v0.25.2/aloha/lib/require.js"> </script>
 		<script type="text/javascript" src="/cdn/alohaeditor-v0.25.2/aloha/lib/aloha-full.min.js"> </script>
+		<script type="text/javascript" src="tree/tree.js"></script>
 	</body>
 </html>
