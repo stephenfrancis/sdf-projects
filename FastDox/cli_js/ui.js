@@ -10,6 +10,7 @@ if (!x) {
 }
 
 x.ui = {
+    log_level: 1,
     max_docs_to_display_in_folder: 100
 };
 
@@ -31,7 +32,7 @@ x.ui.start = function () {
         that.message("x.ui.start() done");
     })
     .then(null, /* catch */ function (reason) {
-        that.log("x.ui.start() failed: " + reason);
+        that.log("x.ui.start() failed: " + reason, 0);
         that.message("*** start failed ***");
     });
 };
@@ -44,18 +45,20 @@ x.ui.setRightArea = function (show) {
             throw new Error("no current_doc");
         }
         $("div#doc_area").removeClass("css_hide");
-        $("div#doc_area #doc_title").val(this.current_doc.title);
+        $("div#doc_area #doc_title").val(this.current_doc.payload.title);
         $("div#doc_area #doc_info" ).html(
-            "type: " + this.current_doc.type + ", uuid: " + this.current_doc.uuid + ", last local save: " + this.current_doc.last_local_save);
+            "type: " + this.current_doc.payload.type + ", uuid: " + this.current_doc.uuid +
+            ", last local save: " + this.current_doc.last_local_save + ", local_change: " + this.current_doc.local_change);
         $("#doc_area #doc_content").empty();
         $("#doc_area #doc_view"   ).empty();
-        if (this.current_doc.type === "folder") {
+        if (this.current_doc.payload.type === "folder") {
             $("#doc_area #doc_content").   addClass("css_hide");
             $("#doc_area #doc_view"   ).removeClass("css_hide");
         } else {
             $("#doc_area #doc_content").removeClass("css_hide");
             $("#doc_area #doc_view"   ).   addClass("css_hide");
         }
+        $("div#doc_area #doc_conflict").html(this.current_doc.conflict || "");
     } else {
         $("div#doc_area").   addClass("css_hide");
     }
@@ -68,7 +71,7 @@ x.ui.renderCreate = function (type) {
             return;
         }
     }
-    this.current_doc  = { uuid: UUID.generate(), type: type, creating: true, title: "", parent_id: "root", sequence_nbr: 0 };
+    this.current_doc  = { uuid: UUID.generate(), creating: true, payload: { type: type, title: "", parent_id: "root", sequence_nbr: 0 } };
     this.orig_title   = "";
     this.orig_content = null;
     this.setRightArea(true);
@@ -86,11 +89,11 @@ x.ui.renderUpdate = function (uuid) {
     x.store.getDoc("dox", uuid)
     .then(function (doc_obj) {
         that.current_doc  = doc_obj;
-        that.orig_title   = doc_obj.title;
-        that.orig_content = doc_obj.content;
-        that.message("editing " + doc_obj.type + " \"" + doc_obj.title + "\"");
+        that.orig_title   = doc_obj.payload.title;
+        that.orig_content = doc_obj.payload.content;
+        that.message("editing " + doc_obj.payload.type + " \"" + doc_obj.payload.title + "\"");
         that.setRightArea(true);
-        that["renderUpdate_" + doc_obj.type]();
+        that["renderUpdate_" + doc_obj.payload.type]();
     })
     .then(null, /* catch */ function (reason) {
         that.message("renderUpdate() failed for reason: " + reason);
@@ -98,18 +101,20 @@ x.ui.renderUpdate = function (uuid) {
 };
 
 x.ui.renderUpdate_doc = function () {
-    $("#doc_content").html(this.current_doc.content);
+    $("#doc_content").html(this.current_doc.payload.content);
 };
 
 x.ui.renderUpdate_folder = function () {
-    var doc_view_area = $("#doc_area #doc_view");
+    var that = this,
+        doc_view_area = $("#doc_area #doc_view");
+
     doc_view_area.empty();
     this.displayFolderContent(doc_view_area, this.current_doc.uuid, "", {}, 0, 0)
     .then(function () {
-        that.log("renderUpdate_folder() done");
+        that.log("renderUpdate_folder() done", 3);
     })
     .then(null, /* catch */ function (reason) {
-        that.message("renderUpdate() failed for reason: " + reason);
+        that.message("renderUpdate() failed for reason: " + reason, 0);
     });
 };
 
@@ -131,9 +136,9 @@ x.ui.displayFolderContent = function (parent_elem, uuid, concat_label, nodes_don
         for (i = 0; i < results.length; i += 1) {
             parent_elem.append("<div/>");
              child_elem = parent_elem.children("div").last();
-             child_elem.append("<h" + heading_level + ">" + concat_label + (i + 1) + " " + results[i].title + "</h" + heading_level + ">");
-            if (results[i].content) {
-                child_elem.append(results[i].content);
+             child_elem.append("<h" + heading_level + ">" + concat_label + (i + 1) + " " + results[i].payload.title + "</h" + heading_level + ">");
+            if (results[i].payload.content) {
+                child_elem.append(results[i].payload.content);
                 number_output += 1;
             }
             that.displayFolderContent(child_elem, results[i].uuid, concat_label + (i + 1) + ".", nodes_done, level_depth + 1, number_output);
@@ -161,7 +166,7 @@ x.ui.displayFolderContent = function (parent_elem, uuid, concat_label, nodes_don
     })
 */
     .then(null, /* catch */ function (reason) {
-        that.log("displayFolderContent() failed for reason: " + reason);
+        that.log("displayFolderContent() failed for reason: " + reason, 0);
     });
 };
 
@@ -182,34 +187,36 @@ x.ui.saveDoc = function () {
     if (!this.current_doc) {
         throw new Error("no current_doc to save");
     }
-    this.current_doc.title   = $("#doc_area #doc_title"  ).val();
-    this.current_doc.content = $("#doc_area #doc_content").html();
-    this.current_doc.sequence_nbr = this.current_doc.sequence_nbr || 0;
+    this.current_doc.payload = this.current_doc.payload || {};
+    this.current_doc.payload.title   = $("#doc_area #doc_title"  ).val();
+    this.current_doc.payload.content = $("#doc_area #doc_content").html();
+    this.current_doc.payload.sequence_nbr = this.current_doc.payload.sequence_nbr || 0;
     if (this.current_doc.creating) {
         create = true;
 //        that.createTreeNode($("#doc_tree #root"), this.current_doc.uuid, this.current_doc.title, true, (this.current_doc.type === "folder"));
         delete this.current_doc.creating;
     }
+    this.current_doc.local_change = true;
     this.current_doc.last_local_save = (new Date()).toUTCString();
-    if (x.remote) {
-        x.remote.using.updateReplStatus(this.current_doc, "Local Change");
-    }
+//    if (x.remote) {
+//        x.remote.using.updateReplStatus(this.current_doc, "Local Change");
+//    }
 
     x.store.storeDoc("dox", this.current_doc)
     .then(function (doc_obj) {
-        that.orig_title   = doc_obj.title;
-        that.orig_content = doc_obj.content;
+        that.orig_title   = doc_obj.payload.title;
+        that.orig_content = doc_obj.payload.content;
         if (create) {
-            that.tree.createNode("root", that.current_doc.uuid, that.current_doc.title, (that.current_doc.type === "folder"));
+            that.tree.createNode("root", that.current_doc.uuid, that.current_doc.payload.title, (that.current_doc.payload.type === "folder"));
         } else {
-            $("#doc_tree #" + that.current_doc.uuid + "> a.tree_label").text(that.current_doc.title);
+            $("#doc_tree #" + that.current_doc.uuid + "> a.tree_label").text(that.current_doc.payload.title);
         }
     })
     .then(function (doc_obj) {
         that.message("saved");
     })
     .then(null, /* catch */ function (reason) {
-        that.message("save failed for reason: " + reason);
+        that.message("saveDoc() failed for reason: " + reason);
     });
 };
 
@@ -218,13 +225,17 @@ x.ui.saveDoc = function () {
 x.ui.drawTreeNode = function (node_id, parent_node) {
     var that = this,
         node_elem;
-    this.log("beginning drawTreeNode()");
+    this.log("beginning drawTreeNode()", 2);
     return x.store.getDoc("dox", node_id)
     .then(function (doc_obj) {
 //        parent_node.css("border", "1px solid green");
 //        console.log(parent_node.length + ", " + /*parent_node[0].tagName + ", " +*/ parent_node.hasClass("tree_branch"));
-        node_elem = that.tree.createNode(parent_node, doc_obj.uuid, doc_obj.title, (doc_obj.type === "folder"));
-        return x.store.setDocParent(node_id, doc_obj.parent_id);
+        if (doc_obj.payload) {
+            node_elem = that.tree.createNode(parent_node, doc_obj.uuid, doc_obj.payload.title, (doc_obj.payload.type === "folder"));
+        } else {
+            that.log("Error, doc_obj has no payload: " + doc_obj, 0);
+        }
+//        return x.store.setDocParent(node_id, doc_obj.parent_id);
     })
     .then(function () {
         return x.store.getChildDocs("dox", node_id);
@@ -239,7 +250,7 @@ x.ui.drawTreeNode = function (node_id, parent_node) {
         return sequence;
     })
     .then(null, /* catch */ function (reason) {
-        that.message("save failed for reason: " + reason);
+        that.message("drawTreeNode() failed for reason: " + reason);
     });
 };
 
@@ -251,7 +262,7 @@ x.ui.drawWholeTree = function () {
         all_docs    = {};
 
     root_node = $("#doc_tree");
-    this.log("beginning drawWholeTree()");
+    this.log("beginning drawWholeTree()", 1);
 
     function drawNode(parent_node, node_id) {
         var doc = all_docs[node_id],
@@ -261,12 +272,12 @@ x.ui.drawWholeTree = function () {
         if (doc) {
 //            that.log("drawWholeTree(): node: " + node_id + " has " + (doc.children ? doc.children.length : 0) + " children");
             delete all_docs[node_id];           // prevent infinite loop on circular reference
-            node = that.tree.createTreeNode(parent_node, doc.uuid, doc.title, (doc.type === "folder"));
-            for (i = 0; doc.children && i < doc.children.length; i += 1) {
-                drawNode(node, doc.children[i]);
+            node = that.tree.createTreeNode(parent_node, doc.uuid, doc.payload.title, (doc.payload.type === "folder"));
+            for (i = 0; doc.payload && doc.payload.children && i < doc.payload.children.length; i += 1) {
+                drawNode(node, doc.payload.children[i]);
             }
         } else {
-            that.log("drawWholeTree(): unrecognized / duplicated node: " + node_id);
+            that.log("drawWholeTree(): unrecognized / duplicated node: " + node_id, 0);
         }
     }
 
@@ -285,12 +296,12 @@ x.ui.drawWholeTree = function () {
                 if (!orphan_parent) {
                     orphan_parent = that.tree.createNode(root_node, "orphan_parent", "Orphaned Nodes", true);
                 }
-                that.tree.createNode(orphan_parent, id, all_docs[id].title, (all_docs[id].type === "folder"));
+                that.tree.createNode(orphan_parent, id, all_docs[id].payload.title, (all_docs[id].payload.type === "folder"));
             }
         }
     })
     .then(null, /* catch */ function (reason) {
-        that.log("drawWholeTree() failed: " + reason);
+        that.log("drawWholeTree() failed: " + reason, 0);
     });
 };
 
@@ -300,14 +311,14 @@ x.ui.deleteLocalDoc = function () {
     if (!this.current_doc) {
         throw new Error("no current_doc");
     }
-    if (x.remote) {
-        x.remote.using.updateReplStatus(this.current_doc, "Local Delete");
-    } else {
+//    if (x.remote) {
+//        x.remote.using.updateReplStatus(this.current_doc, "Local Delete");
+//    } else {
         x.store.deleteDoc("dox", this.current_doc)
         .then(null, /* catch */ function (reason) {
-            that.log("deleteLocalDoc() failed: " + reason);
+            that.log("deleteLocalDoc() failed: " + reason, 0);
         });
-    }
+//    }
     this.tree.removeNode(this.current_doc.uuid);
 };
 
@@ -319,8 +330,10 @@ x.ui.message = function (str) {
 //    $("div#css_message").fadeOut(30);
 };
 
-x.ui.log = function(str) {
-    console.log(str);
+x.ui.log = function (str, log_level) {
+    if (log_level <= this.log_level) {
+        console.log(str);
+    }
 };
 
 
