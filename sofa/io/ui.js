@@ -125,7 +125,7 @@ x.ui.load = function (params, render_opts) {
             this.page = x.session.getPage(params.page_id, params.page_key, this);
         }
         if (this.page) {
-            x.Entity.whenFinishedWaitingForDocuments(function () {
+            x.data.Entity.whenFinishedWaitingForDocuments(function () {
                 that.page.update(params);
                 that.render(render_opts);
             });

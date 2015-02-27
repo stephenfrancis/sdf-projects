@@ -1,7 +1,7 @@
 /*global x, java */
 "use strict";
 
-x.entities.sy_list_item = x.Entity.clone({
+x.entities.sy_list_item = x.data.Entity.clone({
     id              : "sy_list_item",
     title           : "List Item",
     area            : "sy",

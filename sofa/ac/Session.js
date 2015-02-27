@@ -2,12 +2,12 @@
 "use strict";
 
 
-x.Session = x.Base.clone({
+x.ac.Session = x.base.Base.clone({
     id              : "Session",
     max_inactive_interval: (60 * 30),            // in seconds, 30 mins
 });
 
-x.Session.doc = {
+x.ac.Session.doc = {
     location        : "x",
     purpose         : "To represent a user interacting with the system",
     properties      : {
@@ -21,10 +21,10 @@ x.Session.doc = {
     }
 };
 
-x.Session.clone = function (spec) {
+x.ac.Session.clone = function (spec) {
     var session;
     x.log.functionStart("clone", this, arguments);
-    session = x.Base.clone.call(this, spec);
+    session = x.base.Base.clone.call(this, spec);
     session.active = true;
     session.visits = 0;
     session.page_cache = [];
@@ -33,21 +33,21 @@ x.Session.clone = function (spec) {
 };
 
 
-x.Session.getSessionId = function () {
+x.ac.Session.getSessionId = function () {
     x.log.functionStart("getSessionId", this, arguments);
     return id;
 };
 
-x.Session.isAdmin = function (module) {
+x.ac.Session.isAdmin = function (module) {
     return true;
 };
 
-x.Session.isUserInRole = function (role) {
+x.ac.Session.isUserInRole = function (role) {
     x.log.functionStart("isUserInRole", this, arguments);
     return true;
 };
 
-x.Session.getPage = function (page_id, page_key, ui) {
+x.ac.Session.getPage = function (page_id, page_key, ui) {
     var page;
     x.log.functionStart("getPage", this, arguments);
     page = this.getPageFromCacheAndRemove(page_id, page_key);
@@ -59,7 +59,7 @@ x.Session.getPage = function (page_id, page_key, ui) {
     return page;
 };
 
-x.Session.getPageFromCacheAndRemove = function (page_id, page_key) {
+x.ac.Session.getPageFromCacheAndRemove = function (page_id, page_key) {
     var page,
         i;
 
@@ -89,16 +89,16 @@ x.Session.getPageFromCacheAndRemove = function (page_id, page_key) {
     return page;
 };
 
-x.Session.getNewPage = function (page_id, page_key, ui) {
+x.ac.Session.getNewPage = function (page_id, page_key, ui) {
     var page,
         exc;
 
     x.log.functionStart("getNewPage", this, arguments);
     if (!x.pages[page_id]) {
-        throw x.Exception.clone({ id: "page_not_found", page_id: page_id, text: "Page not Found: " + page_id });
+        throw new Error("page not found: " + page_id);
     }
     if (!this.allowed(page_id, page_key)) {
-        throw x.Exception.clone({ id: "access_denied", page_id: page_id, page_key: page_key, text: this.access_denied_message });
+        throw new Error("access denied: " + page_id);
     }
     page = x.pages[page_id].clone({ id: page_id, page: page_id, session: this, instance: true, ui: ui });
     page.page_key = page_key;            // Can be used in setup() since cannot subsequently change
@@ -107,7 +107,7 @@ x.Session.getNewPage = function (page_id, page_key, ui) {
     return page;
 };
 
-x.Session.getPageFromCache = function (page_id) {
+x.ac.Session.getPageFromCache = function (page_id) {
     var i;
     x.log.functionStart("getPageFromCache", this, arguments);
     for (i = 0; i < this.page_cache.length; i += 1) {
@@ -117,7 +117,7 @@ x.Session.getPageFromCache = function (page_id) {
     }
 };
 
-x.Session.clearPageCache = function (number_to_leave) {
+x.ac.Session.clearPageCache = function (number_to_leave) {
     x.log.functionStart("clearPageCache", this, arguments);
     if (typeof number_to_leave !== "number") {
         number_to_leave = 0;
@@ -127,7 +127,7 @@ x.Session.clearPageCache = function (number_to_leave) {
     }
 };
 
-x.Session.clearPageFromCache = function (page_id) {
+x.ac.Session.clearPageFromCache = function (page_id) {
     var i = 0;
     x.log.functionStart("clearPageFromCache", this, arguments);
     while (i < this.page_cache.length) {
@@ -142,7 +142,7 @@ x.Session.clearPageFromCache = function (page_id) {
 
 
 
-x.Session.allowedURL = function (url, always_check_key) {
+x.ac.Session.allowedURL = function (url, always_check_key) {
     var match;
     x.log.functionStart("allowedURL", this, arguments);
     match = url.match(/\?page_id=(\w+)(&page_key=([\w\.]+))?/);
@@ -154,26 +154,26 @@ x.Session.allowedURL = function (url, always_check_key) {
 };
 
 
-x.Session.allowed = function (page_id, page_key, always_check_key) {
+x.ac.Session.allowed = function (page_id, page_key, always_check_key) {
     return true;
 };
 
 
-x.Session.newVisit = function (page_id, page_title, params, trans, page_key) {
+x.ac.Session.newVisit = function (page_id, page_title, params, trans, page_key) {
 };
-x.Session.newVisit.doc = {
+x.ac.Session.newVisit.doc = {
     purpose: "Identify a new 'visit' event, and write a record to the ac_visit table, including parameters passed in",
     args   : "page object (or null), trans object (or null), params: object map of strings, title, if applicable",
     returns: "visit id number"
 };
 
-x.Session.getSessionId = function () {
+x.ac.Session.getSessionId = function () {
     return "blah";
 };
 
-x.Session.updateVisit = function (start_time) {
+x.ac.Session.updateVisit = function (start_time) {
 };
-x.Session.updateVisit.doc = {
+x.ac.Session.updateVisit.doc = {
     purpose: "Update the ac_visit table for an existing 'visit' event, including messages recorded, when processing is finished",
     args   : "start_time: date/time of start of processing, as a number, if known",
     returns: "nothing"

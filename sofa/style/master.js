@@ -1,47 +1,7 @@
 /*global  */
 "use strict";
 
-var x = { client_side: true };
 
-x.Base = {};
-
-x.addMessage = function (str) {
-	console.log(str);
-};
-
-x.loaded = {};
-
-x.loadFile = function (src) {
-    if (typeof x.loaded[src] === "undefined") {
-    	console.log("Loading: " + src);
-//        $("head").append("<script src='" + src + "'></script>");
-//        x.loaded[src] = true;
-        $.ajax({ url: src, dataType: "script", cache: true, async: false, type: "GET",
-            success: function () {
-                x.loaded[src] = true;
-            },
-            error: function (XHR, descr, exception) {
-                x.addMessage(exception + " trying to get " + src, 'E');
-                x.loaded[src] = false;
-                throw exception;
-            }
-        });
-    }
-};
-
-x.loadModule = function (src) {
-	x.loadFile(src + "/load.js");
-};
-
-
-
-x.loadModule("ba");
-x.loadModule("da");
-x.loadModule("pa");
-x.loadModule("io");
-x.loadModule("ac");
-x.loadModule("sy");
-x.loadModule("ad");
 
 x.session = x.Session.clone({ user_id: "francis" });
 

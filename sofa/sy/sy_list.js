@@ -1,7 +1,7 @@
 /*global x, java */
 "use strict";
 
-x.entities.sy_list = x.Entity.clone({
+x.entities.sy_list = x.data.Entity.clone({
     id              : "sy_list",
     title           : "List of Values",
     module_id       : "sy",

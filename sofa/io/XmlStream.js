@@ -2,7 +2,7 @@
 "use strict";
 
 
-x.XmlStream = x.Base.clone({
+x.XmlStream = x.base.Base.clone({
     id                      : "XmlStream",
     level                   : 0,
      left_bracket_subst     : "≤",       // for XML substitution
@@ -27,10 +27,10 @@ x.XmlStream.right_bracket_regex = new RegExp(x.XmlStream.right_bracket_subst, "g
 x.XmlStream.attribute = function (attr, value, valid_xml_content) {
     x.log.functionStart("attribute", this, arguments);
     if (typeof attr !== "string") {
-        throw x.Exception.clone({ id: "attr_must_be_a_string" , xml_stream: this.id });
+        throw new Error("attr must be a string: " + attr);
     }
     if (typeof value !== "string") {
-        throw x.Exception.clone({ id: "value_must_be_a_string", xml_stream: this.id, attribute: attr });
+        throw new Error("value must be a string: " + value);
     }
     if (!valid_xml_content) {
         value = value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
@@ -71,7 +71,7 @@ x.XmlStream.addChild.doc = {
 x.XmlStream.addText = function (text, valid_xml_content) {
     x.log.functionStart("addText", this, arguments);
     if (typeof text !== "string") {
-        throw x.Exception.clone({ id: "invalid_text_argument", xml_stream: this.id });
+        throw new Error("text must be a string: " + text);
     }
     text = text.replace(this.left_bracket_regex, "<").replace(this.right_bracket_regex, ">");
     this.jquery_elem.text(text);
@@ -89,7 +89,7 @@ x.XmlStream.addHTML = function (text) {
         name;
     x.log.functionStart("addHTML", this, arguments);
     if (typeof text !== "string") {
-        throw x.Exception.clone({ id: "invalid_text_argument", xml_stream: this.id });
+        throw new Error("text must be a string: " + text);
     }
     text = text.replace(this.left_bracket_regex, "<").replace(this.right_bracket_regex, ">");
     this.jquery_elem.append(text);

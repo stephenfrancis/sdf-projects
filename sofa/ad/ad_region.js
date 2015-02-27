@@ -1,7 +1,7 @@
 /*global x, java */
 "use strict";
 
-x.entities.ad_region = x.Entity.clone({
+x.entities.ad_region = x.data.Entity.clone({
     id              : "ad_region",
     title           : "Region",
     area            : "ad",

@@ -98,7 +98,7 @@ x.sections.HomePageSection.addWorkflowTasks = function (query, sctn_title) {
         task_array,
         count = 0;
     x.log.functionStart("addWorkflowTasks", this, arguments);
-    today = x.fields.Date.parse("today");
+    today = Date.parse("today");
     query.addTable({ table: "ac_wf_inst", join_cond: "?._key=A.wf_inst" }).addColumn({ name: "title" });
     query.getColumn("A.title").sortTop();
     query.addCondition({ column: "A.status"    , operator: "=" , value: "A" });        // active nodes
