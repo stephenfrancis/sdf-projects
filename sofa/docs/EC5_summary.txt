@@ -1,0 +1,107 @@
+
+
+// EC5
+
+
+Attributes of a Named Data Property:
+Attribute Name		Value Domain					Description
+[[Value]]			Any ECMAScript language type	The value retrieved by reading the property.
+[[Writable]]		Boolean							If false, attempts by ECMAScript code to change the property’s [[Value]] attribute using [[Put]] will not succeed.
+[[Enumerable]]		Boolean							If true, the property will be enumerated by a for-in enumeration (see 12.6.4). Otherwise, the property is said to be non-enumerable.
+[[Configurable]]	Boolean							If false, attempts to delete the property, change the property to be an accessor property, or change its attributes (other than [[Value]]) will fail.
+
+Attributes of a Named Accessor Property
+Attribute Name		Value Domain					Description
+[[Get]]				Object or Undefined				If the value is an Object it must be a function Object. The function’s [[Call]] internal method (8.6.2) is called with an empty arguments list to return the property value each time a get access of the property is performed.
+[[Set]]				Object or Undefined				If the value is an Object it must be a function Object. The function’s [[Call]] internal method (8.6.2) is called with an arguments list containing the assigned value as its sole argument each time a set access of the property is performed. The effect of a property's [[Set]] internal method may, but is not required to, have an effect on the value returned by subsequent calls to the property's [[Get]] internal method.
+[[Enumerable]]		Boolean							If true, the property is to be enumerated by a for-in enumeration (see 12.6.4). Otherwise, the property is said to be non-enumerable.
+[[Configurable]]	Boolean							If false, attempts to delete the property, change the property to be a data property, or change its attributes will fail.
+
+If the value of an attribute is not explicitly specified by this specification for a named property, the default value is used:
+Attribute Name		Default Value
+[[Value]]			undefined
+[[Get]]				undefined
+[[Set]]				undefined
+[[Writable]]		false
+[[Enumerable]]		false
+[[Configurable]]	false
+
+Internal Properties Common to All Objects:
+Internal Property		Value Type Domain					Description
+[[Prototype]]			Object or Null						The prototype of this object.
+[[Class]]				String								A String value indicating a specification defined classification of objects.
+[[Extensible]]			Boolean								If true, own properties may be added to the object.
+[[Get]]					SpecOp(propertyName) → any			Returns the value of the named property.
+[[GetOwnProperty]]		SpecOp (propertyName) → Undefined or Property Descriptor			Returns the Property Descriptor of the named own property of this object, or undefined if absent.
+[[GetProperty]]			SpecOp (propertyName) → Undefined or Property Descriptor			Returns the fully populated Property Descriptor of the named property of this object, or undefined if absent.
+[[Put]]					SpecOp (propertyName, any, Boolean)	Sets the specified named property to the value of the second parameter. The flag controls failure handling.
+[[CanPut]]				SpecOp (propertyName) → Boolean		Returns a Boolean value indicating whether a [[Put]] operation with PropertyName can be performed.
+[[HasProperty]]			SpecOp (propertyName) → Boolean		Returns a Boolean value indicating whether the object already has a property with the given name.
+[[Delete]]				SpecOp (propertyName, Boolean) → Boolean		Removes the specified named own property from the object. The flag controls failure handling.
+[[DefaultValue]]		SpecOp (Hint) → primitive			Hint is a String. Returns a default value for the object.
+[[DefineOwnProperty]]	SpecOp (propertyName, PropertyDescriptor, Boolean) → Boolean		Creates or alters the named own property to have the state described by a Property Descriptor. The flag controls failure handling.
+
+Accessor Properties can be specified in Object literal notation:
+	var temp2 = { set speed(arg) { this.velocity = arg; }, get speed() { return this.velocity; } }
+	js> temp2.velocity
+	js> temp2.speed = 4
+	4
+	js> temp2.velocity
+	4
+	js> temp2.speed
+	4
+
+However, mixing them with Data Properties is bad:
+js> var temp3 = { set speed(arg) { this.speed = arg; }, get speed() { return this.speed; } }
+js> temp3.speed = 5
+java.lang.StackOverflowError
+	at org.mozilla.javascript.ScriptableObject.getBase(ScriptableObject.java:2531)
+	at org.mozilla.javascript.ScriptableObject.putProperty(ScriptableObject.java:2344)
+	at org.mozilla.javascript.ScriptRuntime.setObjectProp(ScriptRuntime.java:1598)
+	at org.mozilla.javascript.ScriptRuntime.setObjectProp(ScriptRuntime.java:1592)
+	...
+
+Accessor Properties can be added to an existing object like this:
+Object.defineProperty(temp, "speed", { set: function(arg) { this.velocity = arg; }, get: function() { return this.velocity; } })
+
+Object.create(object, map of properties and descriptors) returns a new object using object as its prototype, and calling defineProperties() on the map, if given
+Object.defineProperty(object, property, descriptor)
+Object.defineProperties(object, map of properties and descriptors)
+Object.getPrototypeOf(object) returns object's prototype object
+Object.keys(object) returns array of the names of object's own enumerable properties
+Object.seal(object) sets the [[Configurable]] attribute of every named own property of object to false and sets the [[Extensible]] property of the object to false
+Object.freeze(object) as per Object.seal(), but in addition, sets the [[Writable]] attribute of every named own data property of object to false
+Object.preventExtensions(object) sets the [[Extensible]] property of the object to false
+Object.isSealed(object) returns false if any named own property of object has its [[Configurable]] attribute set to true or if the object's [[Extensible]] property is true; otherwise true
+Object.isFrozen(object) returns false if Object.isSealed(object) is false or any named own data property has its [[Writable]] attribute set to true; otherwise true
+Object.isExtensible(object) returns the value of the [[Extensible]] property of the object
+Object.getOwnPropertyDescriptor(object, property) returns object representing property descriptor, e.g. obj = { a: "A" } => {value=A, writable=true, enumerable=true, configurable=true}
+Object.getOwnPropertyNames(object) returns array of names of object's own properties
+
+Date.prototype.toISOString
+Date.now
+Array.isArray
+JSON
+Function.prototype.bind
+String.prototype.trim
+
+Array.prototype.indexOf
+Array.prototype.lastIndexOf
+Array.prototype.every
+Array.prototype.some
+Array.prototype.forEach
+Array.prototype.map
+Array.prototype.filter
+Array.prototype.reduce
+Array.prototype.reduceRight
+
+Getter in property initializer
+Setter in property initializer
+
+Property access on strings
+Reserved words as property names
+
+Zero-width chars in identifiers
+parseInt() ignores leading zeros
+Immutable undefined
+Strict mode
