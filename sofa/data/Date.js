@@ -1,8 +1,8 @@
 /*global x, java */
 "use strict";
 
-//---------------------------------------------------------------------------- Date
-x.data.Date = x.data.Text.clone({
+
+x.data.addClone(x.data.Text, {
     id                      : "Date",
     css_type                : "date",
     search_oper_list        : "sy.search_oper_list_scalar",
@@ -18,16 +18,14 @@ x.data.Date = x.data.Text.clone({
 //    tb_span               : 2,
     tb_input_list           : "input-small",
     week_start_day          : 0,            // 0 = Sun, 1 = Mon, etc
-    error_message           : "not a valid date"
-});
-x.data.Date.doc = {
+    error_message           : "not a valid date",
     purpose                 : "To represent a date field",
     properties: {
         display_format      : { label: "Date format string to use when displaying the field read-only", type: "string", usage: "optional in spec" },
         update_format       : { label: "Date format string to use when updating the field", type: "string", usage: "optional in spec" },
         internal_format     : { label: "Date format string used to store the date value internally", type: "string", usage: "do not use" }
     }
-};
+});
 
 
 x.data.Date.getUpdateText = function () {

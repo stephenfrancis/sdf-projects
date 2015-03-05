@@ -3,7 +3,7 @@
 
 
 
-x.session = x.Session.clone({ user_id: "francis" });
+x.session = x.ac.Session.clone({ user_id: "francis" });
 
 x.log.level = x.log.levels.debug;
 

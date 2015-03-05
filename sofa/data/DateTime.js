@@ -1,8 +1,8 @@
 /*global x, java */
 "use strict";
 
-//---------------------------------------------------------------------------- DateTime
-x.data.DateTime = x.data.Date.clone({
+
+x.data.addClone(x.data.Date, {
     id              : "DateTime",
     css_type        : "datetime",
     internal_format : "yyyy-MM-dd HH:mm:ss",
@@ -17,16 +17,10 @@ x.data.DateTime = x.data.Date.clone({
     regex_pattern1  : "[0-3]?[0-9]/[0-1]?[0-9]/[0-9]{2}",                // client side
     regex_pattern2  : "^([01]?[0-9]|2[0-3]):[0-5][0-9]$",                // client side
     error_message   : "not a valid date/time",
-    addl_cli_side_props: [
-                      "regex_label1", "regex_pattern1", "input_mask1",
-                      "regex_label2", "regex_pattern2", "input_mask2"
-                      ]
-});
-x.data.DateTime.doc = {
     purpose                 : "To represent a date/time field",
     properties              : {
     }
-};
+});
 
 x.data.DateTime.isBefore = function (date) {
     var nThisSecond,

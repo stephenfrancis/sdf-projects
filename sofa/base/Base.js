@@ -1,23 +1,39 @@
 /*global  */
 "use strict";
 
-x.base.Base = {};
+x.base.Base = { id: "Base", owner: x.base };
 
 x.base.Base.clone = function (spec) {
 	var out = {};
+//	if (!spec.id) {
+//	    throw new Error("new object must have its own id");
+//	}
     out = Object.create(this);
     out.parent = this;
     if (spec) {
-        out.addFrom(spec);
+        out.addPropertiesFrom(spec);
     }
 	return out;
 };
 
-x.base.Base.addFrom = function (spec) {
+x.base.Base.addPropertiesFrom = function (spec) {
     var that = this;
     this.forOwn.call(spec, function (key, val) {
         that[key] = val;
     });
+};
+
+x.base.Base.add = function (object) {
+    if (!object.id) {
+        throw new Error("object must have an id");
+    }
+    object.owner = this;
+    this[object.id] = object;
+    return object;
+};
+
+x.base.Base.addClone = function (parent, spec) {
+    return this.add(parent.clone(spec));
 };
 
 x.base.Base.forAll = function (funct) {
@@ -100,6 +116,15 @@ x.base.Base.reassignProperty = function (key, value) {
 };
 
 x.base.Base.path = function () {
+    var out = "",
+        level = this;
+    do {
+        out = "." + (level.id || "") + out;
+    } while (level = level.owner);
+    return out.substr(1);           // cut off initial "."
+};
+
+x.base.Base.descent = function () {
     var out = "",
         level = this;
     while (level.parent) {

@@ -1,8 +1,8 @@
 /*global x, java */
 "use strict";
 
-//---------------------------------------------------------------------------- Reference
-x.data.Reference = x.data.Text.clone({
+
+x.data.addClone(x.data.Text, {
     id              : "Reference",
     css_type        : "reference",
     search_oper_list: "sy.search_oper_list_option",
@@ -15,9 +15,6 @@ x.data.Reference = x.data.Text.clone({
 //                      Hollow Right Triangle: &#x25B7;       Hollow Down Triangle: &#x25BD;
 //    nav_dropdown_icon: "&#x25BD;",
     nav_link_icon    : "&#x25B7;",
-    addl_cli_side_props: [ "autocompleter_max_rows", "autocompleter_min_length" ]
-});
-x.data.Reference.doc = {
     purpose         : "To represent a field that references a record in another entity",
     properties      : {
         ref_entity          : { label: "String id of the entity to which this field relates", type: "string", usage: "required in spec" },
@@ -27,7 +24,7 @@ x.data.Reference.doc = {
         autocompleter_max_rows  : { label: "Maximum number of autocompleter matches to display (can be set at Entity level if preferred)", type: "number", usage: "optional in spec" },
         autocompleter_min_length: { label: "Minimum number of characters to type before getting autocompleter matches back (can be set at Entity level if preferred)", type: "number", usage: "optional in spec" },
     }
-};
+});
 
 
 x.data.Reference.getKeyPieces = function () {

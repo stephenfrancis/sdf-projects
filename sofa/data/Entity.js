@@ -2,7 +2,7 @@
 "use strict";
 
 
-x.data.Entity = x.data.FieldSet.clone({
+x.data.addClone(x.data.FieldSet, {
     id                      : "Entity",
     database_url            : "http://other_apps:5984/stevief/",
 //    events                  : x.data.EventStack.clone({ id: "Record.events", events: [
@@ -26,18 +26,34 @@ x.data.Entity.clone = function (spec) {
             }
         }
         this.child_rows = {};
-    } else {
-        new_obj.events         = this.events  .clone({ id: new_obj.id + ".events" });
-        new_obj.events.record  = new_obj;
+//    } else {
+//        new_obj.events         = this.events  .clone({ id: new_obj.id + ".events" });
+//        new_obj.events.record  = new_obj;
     }
     return new_obj;
 };
 
 
 
+x.data.Entity.addPage = function (spec) {
+    var page;
+//    spec.entity = this;
+    if (!this.pages) {
+        this.pages = { id: "pages", owner: this };
+    }
+    if (this.pages[spec.id]) {
+        throw new Error("page already exists: " + spec.id);
+    }
+    page = (spec.type || x.page.Page).clone(spec);
+    page.owner = this;
+    this.pages[spec.id] = page;
+    return page;
+};
+
 x.data.Entity.getDocument = function (key) {
     var doc,
-        doc_id;
+        doc_id,
+        promise;
     x.log.functionStart("getDocument", this, arguments);
     key = key || "";
     doc_id = key && ((!this.primary_key.auto_generate ? this.id + ":" : "") + key);
@@ -48,36 +64,18 @@ x.data.Entity.getDocument = function (key) {
         modifiable: true
     });
     if (key) {
-        doc.load();
+        promise = new Promise(function (resolve, reject) {
+            doc.load(resolve, reject);
+        });
     } else {
         doc.status = 'N';    // New
+        promise = new Promise(doc);
     }
-    return doc;
+    return promise;
 };
 
 x.data.Entity.isWaiting = function () {
     return (this.status === 'L' || this.status === 'S');
-};
-
-x.data.Entity.whenFinishedWaitingForDocuments = function (callback) {
-    x.documents_waiting_callback = callback;
-    x.data.Entity.runCallbackIfNoLongerWaiting();
-};
-
-x.data.Entity.waitingForDocuments = function (callback) {
-    var waiting = false,
-        i;
-    for (i = 0; i < x.documents.length && !waiting; i += 1) {
-        waiting = x.documents[i].isWaiting();
-    }
-    return waiting;
-};
-
-x.data.Entity.runCallbackIfNoLongerWaiting = function () {
-    if (typeof x.documents_waiting_callback === "function" && !x.data.Entity.waitingForDocuments()) {
-        x.documents_waiting_callback();
-        x.documents_waiting_callback = null;
-    }
 };
 
 
@@ -110,57 +108,50 @@ x.data.Entity.eachChildRow = function (funct, specific_entity_id) {
     });
 };
 
-x.data.Entity.load = function () {
+x.data.Entity.load = function (resolve, reject) {
     var that = this;
     x.log.functionStart("load", this, arguments);
     if (this.status) {
-        throw new Error("invalid document status: " + this.status);
-    }
-    if (this.owner) {
-        throw new Error("invalid call on child row: " + this);
+        reject("invalid document status: " + this.status);
     }
     x.log.debug(this, "load() doc_id: " + this.doc_id);
     this.status = 'L';    // Loading
-    x.http({ url: this.database_url + encodeURIComponent(this.doc_id), cache: false, async: false, type: "GET",
+    x.io.http({ url: this.database_url + encodeURIComponent(this.doc_id), cache: false, async: false, type: "GET",
         success: function (data_back) {
             x.log.debug(that, "calling load.success()");
             if (that.status !== 'L') {
-                throw new Error("invalid document status - " + that.status);
+                reject("invalid document status - " + that.status);
             }
             that.populate(data_back);
 //            that.primary_key.setInitial(that.doc_id);
             that.primary_key.fixed_key = true;
             that.rev    = data_back._rev;
             that.status = 'U';
-            // trigger loaded
-            x.data.Entity.runCallbackIfNoLongerWaiting();
+            resolve(that);
         },
         error: function (code, msg) {
             x.log.debug(that, "calling load.error()");
             that.status = 'E';
             that.error  = "[" + code + "] " + msg;
-            x.data.Entity.runCallbackIfNoLongerWaiting();
+            reject(that.error);
         }
     });
 };
 
-x.data.Entity.save = function () {
+x.data.Entity.save = function (resolve, reject) {
     var that = this,
         url;
     x.log.functionStart("save", this, arguments);
     if (this.status !== 'N' && this.status !== 'M') {
-        throw new Error("invalid document status - " + this.status);
-    }
-    if (this.owner) {
-        throw new Error("invalid call on child row: " + this);
+        reject("invalid document status - " + this.status);
     }
     if (!this.isValid()) {
-        throw new Error("document is not valid");
+        reject("document is not valid");
     }
     if (!this.doc_id) {
         if (!this.primary_key.auto_generate) {
             if (this.primary_key.isBlank()) {
-                throw new Error("primary key not populated");
+                reject("primary key not populated");
             }
             this.doc_id = this.id + ":" + this.primary_key.get();
         }
@@ -171,28 +162,29 @@ x.data.Entity.save = function () {
     }
     x.log.debug(this, "save() doc_id: " + this.doc_id + ", rev: " + this.rev);
     this.status = 'S';    // Saving
-    x.http({ url: url, cache: false, async: false, type: (this.doc_id ? "PUT" : "POST"), data: JSON.stringify(this.getData()),
+    x.io.http({ url: url, cache: false, async: false, type: (this.doc_id ? "PUT" : "POST"), data: JSON.stringify(this.getData()),
         success: function (data_back) {
             x.log.debug(that, "calling save.success()");
             if (that.status !== 'S') {
-                throw new Error("invalid document status: " + that.status);
+                reject("invalid document status: " + that.status);
             }
             if (data_back.ok) {
                 that.status = 'U';
                 that.doc_id = data_back.id;
                 that.rev    = data_back.rev;
                 // trigger loaded
+                resolve(that);
             } else {
                 that.status = 'E';
                 that.error  = "unknown: " + data_back.ok;
+                reject(that.error);
             }
-            x.data.Entity.runCallbackIfNoLongerWaiting();
         },
         error: function (code, msg) {
             x.log.debug(that, "calling save.error()");
             that.status = 'E';
             that.error  = "[" + code + "] " + msg;
-            x.data.Entity.runCallbackIfNoLongerWaiting();
+            reject(that.error);
         }
     });
 };
@@ -284,21 +276,6 @@ x.data.Entity.isValid = function () {
         valid = valid && (row.deleting || row.isValid());
     });
     return valid;
-};
-
-x.data.Entity.getMessages = function (collector, delim) {
-    x.log.functionStart("getMessages", this, arguments);
-    if (!collector) {
-        collector = "";
-    }
-    if (this.error) {
-        collector = this.addMessageArray(collector, delim, [{ type: 'E', text: this.error }]);
-    }
-    collector = x.data.FieldSet.getMessages.call(this, collector, delim);
-    this.eachChildRow(function (row) {
-        collector = row.getMessages(collector, delim);
-    });
-    return collector;
 };
 
 

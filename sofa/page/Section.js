@@ -2,16 +2,12 @@
 "use strict";
 
 
-x.page.Section = x.base.Base.clone({
+x.page.addClone(x.base.Base, {
     id                      : "Section",
     visible                 : true,
     width                   : "100%",
     tb_span                 : 12,        // replacing width
-    right_align_numbers     : false
-});
-x.page.Section.doc = {
-    location                : "x.sections",
-    file                    : "$Header: /rsl/rsl_app/core/page/Section.js,v 1.23 2014/07/22 07:50:57 francis Exp $",
+    right_align_numbers     : false,
     purpose                 : "To represent a component of a page with display content",
     properties              : {
         title               : { label: "Text to use as the title of this Section", type: "string", usage: "Optional in spec" },
@@ -20,7 +16,7 @@ x.page.Section.doc = {
         visible             : { label: "Whether or not to show this Section, defaults true", type: "boolean", usage: "Optional in spec" },
         hide_section_if_empty: { label: "Only render the section if it has content (defaults to false)", type: "boolean", usage: "can edit" },
     }
-};
+});
 
 x.page.Section.setup = function () {
     x.log.functionStart("setup", this, arguments);
@@ -69,13 +65,19 @@ x.page.Section.getSectionElement = function (render_opts) {
     var temp_title;
     x.log.functionStart("getSectionElement", this, arguments);
     if (!this.sctn_elem) {
-        this.sctn_elem = this.parent_elem.addChild("div", this.id, this.getCSSClass());
+        this.sctn_elem = x.io.browser.addElement(this.parent_elem, "div");
+        this.sctn_elem.attr("id", this.id);
+        this.sctn_elem.addClass(this.getCSSClass());
         temp_title = this.title || this.generated_title;
         if (temp_title) {
-            this.sctn_elem.addChild("h2", null, "css_section_title").addText(temp_title);
+            x.io.browser.addElement(this.sctn_elem, "h2")
+                .addClass("css_section_title")
+                .text(temp_title);
         }
         if (this.text) {
-            this.sctn_elem.addChild("div", null, "css_section_text").addText(this.text, true);    // Valid XML content
+            x.io.browser.addElement(this.sctn_elem, "div")
+                .addClass("css_section_text")
+                .text(this.text);
         }
     }
     return this.sctn_elem;
@@ -110,6 +112,27 @@ x.page.Section.isValid.doc = {
     args   : "none",
     returns: "true (to be overridden)"
 };
+
+
+x.page.Page.sections.add = function (spec) {
+    var section;
+    x.log.functionStart("add", this, arguments);
+    if (!spec.type) {
+        throw new Error("Section type must be specified in spec: " + spec.id);
+    }
+    if (!x.page[spec.type]) {
+        throw new Error("Section type not available: " + spec.type + " in spec: " + spec.id);
+    }
+    section = x.page[spec.type].clone(spec);
+    x.base.OrderedMap.add.call(this, section);
+    return section;
+};
+x.page.Page.sections.add.doc = {
+    purpose: "Create a new section object in the owning page, using the spec properties supplied",
+    args   : "Spec object whose properties will be given to the newly-created section",
+    returns: "Newly-created section object"
+};
+
 
 //To show up in Chrome debugger...
 //@ sourceURL=page/Section.js

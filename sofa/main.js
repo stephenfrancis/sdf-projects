@@ -9,3 +9,6 @@ x.loadModule("io");
 x.loadModule("ac");
 x.loadModule("sy");
 x.loadModule("ad");
+
+
+x.finishedModuleLoad();

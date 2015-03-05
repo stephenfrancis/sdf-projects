@@ -1,8 +1,8 @@
 /*global x, java */
 "use strict";
 
-//---------------------------------------------------------------------------- Number
-x.data.Number = x.data.Text.clone({
+
+x.data.addClone(x.data.Text, {
     id                      : "Number",
     css_type                : "number",
     css_align               : "right",
@@ -14,17 +14,15 @@ x.data.Number = x.data.Text.clone({
 //    tb_span               : 2,
     tb_input_list           : "input-mini",
     db_type                 : 'I',
-    min                     : 0            // prevent negatives by default
+    min                     : 0,            // prevent negatives by default
 //    update_length         : 10
-});
-x.data.Number.doc = {
     purpose                 : "To represent a decimal number field",
     properties              : {
         decimal_digits      : { label: "Number of decimal places to store", type: "number", usage: "optional in spec" },
         min                 : { label: "Minimum value in validations", type: "number", usage: "optional in spec" },
         max                 : { label: "Maximum value in validations", type: "number", usage: "optional in spec" }
     }
-};
+});
 
 x.data.Number.set = function (new_val) {
     x.log.functionStart("set", this, arguments);

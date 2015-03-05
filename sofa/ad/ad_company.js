@@ -1,10 +1,9 @@
 /*global x, java */
 "use strict";
 
-x.ad.Company = x.data.Entity.clone({
+x.ad.addEntity({
     id              : "Company",
     title           : "Company",
-    area            : "ad",
     display_page    : true,
     transactional   : true,
     label_pattern   : "{title}",
@@ -25,96 +24,91 @@ x.ad.Company.indexes = [];
 // End of Entity ad_company
 
 
-x.ad.Company.context = x.ContextPage.clone({
-    id              : "ad_company_context",
-    entity          : x.ad.Company,
-    title           : "Company",
+x.ad.Company.addPage({
+    id              : "context",
+    type            : x.page.ContextPage,
+    title           : "Company"
 });
-x.ad.Company.context.sections.addAll([
-    { id: "main", type: "Display", entity: "ad_company", title: null, columns: 1 }
+x.ad.Company.pages.context.sections.addAll([
+    { id: "main", type: "Display", entity_id: "ad.Company", title: null, columns: 1 }
 ]);
-x.ad.Company.context.links.addAll([
-    { id: "update", page_to: "ad_company_update", page_key: "{page_key}" },
-    { id: "delete", page_to: "ad_company_delete", page_key: "{page_key}" }
+x.ad.Company.pages.context.links.addAll([
+    { id: "update", page_to: "ad.Company.update", page_key: "{page_key}" },
+    { id: "delete", page_to: "ad.Company.delete", page_key: "{page_key}" }
 ]);
 //End of Page ad_company_context
 
 
-x.ad.Company.PageCreate = x.page.Page.clone({
-    id              : "ad_company_create",
-    entity          : x.ad.Company,
+x.ad.Company.addPage({
+    id              : "create",
     title           : "Create a Company",
     transactional   : true,
     short_title     : "Create"
 });
-x.ad.Company.create.sections.addAll([
-    { id: "main", type: "Create", entity: "ad_company", title: "Create a new Company record...", text: "Some info to help you do this right..." }
+x.ad.Company.pages.create.sections.addAll([
+    { id: "main", type: "Create", entity_id: "ad.Company", title: "Create a new Company record...", text: "Some info to help you do this right..." }
 ]);
 // End of Page ad_company_create
 
 
-x.ad.Company.PageDelete = x.page.Page.clone({
-    id              : "ad_company_delete",
-    entity          : x.ad.Company,
+x.ad.Company.addPage({
+    id              : "deleet",
     title           : "Delete this Company",
     transactional   : true,
     requires_key    : true,
     short_title     : "Delete",
     security        : { all: false, sysmgr: true }
 });
-x.ad.Company.delete.sections.addAll([
-    { id: "main", type: "Delete", entity: "ad_company" }
+x.ad.Company.pages.deleet.sections.addAll([
+    { id: "main", type: "Delete", entity_id: "ad.Company" }
 ]);
 //End of Page ad_company_delete
 
 
-x.ad.Company.display = x.page.Page.clone({
-    id              : "ad_company_display",
-    entity          : x.ad.Company,
+x.ad.Company.addPage({
+    id              : "display",
     title           : "Company",
     requires_key    : true
 });
-x.ad.Company.display.tabs.addAll([
+x.ad.Company.pages.display.tabs.addAll([
     { id: "details", label: "Main Details" },
 ]);
-x.ad.Company.display.sections.addAll([
-    { id: "main"    , type: "Display"      , tab: "details", entity: "ad_company" },
+x.ad.Company.pages.display.sections.addAll([
+    { id: "main"    , type: "Display"      , tab: "details", entity_id: "ad.Company" },
 //    { id: "locns"   , type: "ListQuery"    , tab: "details", entity: "ad_locn", link_field: "company" },
 //    { id: "depts"   , type: "ListQuery"    , tab: "details", entity: "ad_dept", link_field: "company" },
 //    { id: "chg_hist", type: "ChangeHistory", tab: "details", entity: "ad_company" }
 ]);
-x.ad.Company.display.links.addAll([
-    { id: "update", page_to: "ad_company_update", page_key: "{page_key}" },
-    { id: "delet" , page_to: "ad_company_delete", page_key: "{page_key}" }
+x.ad.Company.pages.display.links.addAll([
+    { id: "update", page_to: "ad.Company.update", page_key: "{page_key}" },
+    { id: "deleet", page_to: "ad.Company.delete", page_key: "{page_key}" }
 ]);
 //End of Page ad_company_display
 
 
-x.ad.Company.search = x.page.Page.clone({
-    id              : "ad_company_search",
-    entity          : x.ad.Company,
+x.ad.Company.addPage({
+    id              : "search",
     title           : "Search for Companies",
     short_title     : "Companies"
 });
-x.ad.Company.search.sections.addAll([
+x.ad.Company.pages.search.sections.addAll([
 //    { id: "main", type: "Search", entity : "ad_company" }
 ]);
-x.ad.Company.search.links.addAll([
-    { id: "create", page_to: "ad_company_create" }
+x.ad.Company.pages.search.links.addAll([
+    { id: "create", page_to: "ad.Company.create" }
 ]);
 //End of Page ad_company_search
 
 
-x.ad.Company.update = x.page.Page.clone({
-    id              : "ad_company_update",
-    entity          : x.ad.Company,
+x.ad.Company.addPage({
+    id              : "update",
     title           : "Update this Company",
     transactional   : true,
     requires_key    : true,
     short_title     : "Update"
 });
-x.ad.Company.update.sections.addAll([
-    { id: "main", type: "Update", entity: "ad_company" }
+x.ad.Company.pages.update.sections.addAll([
+    { id: "main", type: "Update", entity_id: "ad.Company" }
 ]);
 //End of Page ad_company_update
 

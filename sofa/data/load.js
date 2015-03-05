@@ -1,7 +1,10 @@
 /*global x, java */
 "use strict";
 
-x.data = {};
+x.addModule({
+    id: "data",
+    title: "Data"
+});
 
 x.loadFile("data/FieldSet.js");
 x.loadFile("data/Entity.js");

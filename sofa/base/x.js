@@ -1,8 +1,8 @@
 /*global x, java */
 "use strict";
 
-var x = {};
 
+var x = { id: "x" };
 
 x.loaded = {};
 
@@ -13,7 +13,9 @@ x.loadFile = function (src) {
                 load(src);
             } catch (e) {
                 print(e);
-                print(e.stack);
+                if (e.stack) {
+                    print(e.stack);
+                }
             }
             x.loaded[src] = true;
         } else {
@@ -23,6 +25,7 @@ x.loadFile = function (src) {
                 },
                 error: function (XHR, descr, exception) {
                     x.loadFile.exception = exception;
+                    console.log(exception.stack);
                     throw new Error(exception + " trying to get " + src);
                 }
             });
@@ -31,6 +34,9 @@ x.loadFile = function (src) {
 };
 
 x.loadModule = function (src) {
+    if (x.loaded[src + "/load.js"]) {
+        throw new Error("module already loaded: " + src);
+    }
     x.loadFile(src + "/load.js");
 };
 

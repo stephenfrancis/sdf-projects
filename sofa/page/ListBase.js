@@ -1,7 +1,7 @@
 /*global x, java */
 "use strict";
 
-x.page.ListBase = x.page.Section.clone({
+x.page.addClone(x.page.Section, {
     id                  : "ListBase",
     columns             : x.base.OrderedMap.clone({ id: "ListBase.columns" }),
     recordset_size      : 10,
@@ -63,8 +63,7 @@ x.page.ListBase.clone = function (spec) {
     var new_obj;
     x.log.functionStart("clone", this, arguments);
     new_obj = x.page.Section.clone.call(this, spec);
-    new_obj.columns = this.columns.clone({ id: "ListBase.columns" });
-    new_obj.columns.section = new_obj;
+    new_obj.columns = this.columns.clone({ id: "columns", owner: new_obj });
     new_obj.row_count = 0;
     new_obj.keys = [];
     return new_obj;
@@ -778,7 +777,7 @@ x.page.ListBase.columns.add.doc = {
 };
 
 
-x.page.ListBase.Column = x.Base.clone({
+x.page.ListBase.Column = x.base.Base.clone({
     id: "sections.ListBase.Column",
     visible : true,
     hover_text_icon : "&#x24D8;"

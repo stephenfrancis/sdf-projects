@@ -1,10 +1,8 @@
 /*global x, java */
 "use strict";
 
-x.fields = {};
 
-//---------------------------------------------------------------------------- Text
-x.data.Text = x.base.Base.clone({
+x.data.addClone(x.base.Base, {
     id              : "Text",
     css_type        : "text",
     val             : "",
@@ -31,10 +29,6 @@ x.data.Text = x.base.Base.clone({
     validated       : false,                    // private - validated since last significant change?
     modified        : false,                    // private - modified since original value, or not?
     skip_insert     : false,
-});
-
-
-x.data.Text.doc = {
     purpose         : "To represent a basic unit of textual information, how it is captured, validated, stored in the database, and represented on screen",
     properties      : {
         type                : { label: "What type of field to create - which object in x.data", type: "string", usage: "required in spec" },
@@ -67,7 +61,7 @@ x.data.Text.doc = {
         validated           : { label: "Whether or not this field has been validated since it was last changed", type: "boolean", usage: "do not use" },
         modified            : { label: "Whether or not this field has been modified since being created / loaded from the database, use isModified()", type: "boolean", usage: "do not use" },
     }
-};
+});
 
 
 // called when cloned on a FieldSet that has instance = true

@@ -2,7 +2,7 @@
 "use strict";
 
 
-x.data.LoV = x.base.OrderedMap.clone({
+x.data.addClone(x.base.OrderedMap, {
     id                      : "LoV",
     blank_label             : "[blank]",
     choose_label            : "[choose]",

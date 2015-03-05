@@ -2,7 +2,7 @@
 "use strict";
 
 
-x.data.FieldSet = x.base.OrderedMap.clone({
+x.data.addClone(x.base.OrderedMap, {
     id                      : "FieldSet",
     modifiable              : false,
     modified                : false,                       // private - modified since original value, or not?

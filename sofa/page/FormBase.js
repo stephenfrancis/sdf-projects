@@ -1,17 +1,14 @@
 /*global x, java */
 "use strict";
 
-x.page.FormBase = x.page.Section.clone({
+
+x.page.addClone(x.page.Section, {
     id                      : "FormBase",
     columns                 : 1,
     layout                  : "form-horizontal",        // for Create/Update, "fluid" for Display, or "multi-column"
     hide_section_if_empty   : true,
     hide_blank_uneditable_fields: true,
-    form_horiz_tb_input     : "input-xlarge"
-});
-x.page.FormBase.doc = {
-    location                : "x.sections",
-    file                    : "$Header: /rsl/rsl_app/core/page/FormBase.js,v 1.62 2015/02/04 11:32:35 francis Exp $",
+    form_horiz_tb_input     : "input-xlarge",
     purpose                 : "To represent a single record or other FieldSet",
     properties              : {
         fieldset            : { label: "FieldSet object supporting this Section, use setFieldSet() and getFieldSet()", type: "x.data.FieldSet", usage: "read only" },
@@ -21,7 +18,7 @@ x.page.FormBase.doc = {
         separate_textareas  : { label: "Render textareas as a single columns, separately below the other fields, defaults true", type: "boolean", usage: "Optional in spec" },
         hide_blank_uneditable_fields: { label: "Whether or not to hide a field from the form if it is both blank and uneditable", type: "boolean", usage: "Optional in spec" }
     }
-};
+});
 
 
 x.page.FormBase.setFieldSet = function (fieldset) {
@@ -241,20 +238,17 @@ x.page.FormBase.renderSeparateTextareas.doc = {
 
 
     
-x.page.Display = x.page.FormBase.clone({
+x.page.addClone(x.page.FormBase, {
     id : "Display",
 //    columns : 2,
     layout: "fluid",
 //    title : "Basic Details",
-    separate_textareas: true
-});
-x.page.Display.doc = {
-    location: "x.sections",
+    separate_textareas: true,
     purpose: "To show a record read-only",
     properties: {
         entity        : { label: "String id of entity to display", type: "string", usage: "required in spec" },
     }
-};
+});
 
 x.page.Display.setup = function () {
     var key;
@@ -284,17 +278,14 @@ x.page.Display.update = function (param) {
 };
 
 
-x.page.Create = x.page.FormBase.clone({
-    id: "Create"
-});
-x.page.Create.doc = {
-    location: "x.sections",
+x.page.addClone(x.page.FormBase, {
+    id: "Create",
     purpose: "To represent a newly-created record",
     properties: {
         entity        : { label: "String id of entity to display", type: "string", usage: "required in spec" },
 //        record        : { label: "Entity object of given id - redundant, as same a fieldset", type: "x.Entity", usage: "read only" }
     }
-};
+});
 
 x.page.Create.setup = function () {
     x.log.functionStart("setup", this, arguments);
@@ -326,16 +317,13 @@ x.page.Create.presave = function () {
 };
 
 
-x.page.Update = x.page.FormBase.clone({
-    id: "Update"
-});
-x.page.Update.doc = {
-    location: "x.sections",
+x.page.addClone(x.page.FormBase, {
+    id: "Update",
     purpose: "To represent an existing record in the database being updated",
     properties: {
         entity        : { label: "String id of entity to display", type: "string", usage: "required in spec" },
     }
-};
+});
 
 x.page.Update.setup = function () {
     var key;
@@ -357,17 +345,13 @@ x.page.Update.setup.doc = {
 
 
 
-x.page.Delete = x.page.FormBase.clone({
-    id: "Delete"
-});
-
-x.page.Delete.doc = {
-    location: "x.sections",
+x.page.addClone(x.page.FormBase, {
+    id: "Delete",
     purpose: "To represeent an existing record in the database being deleted",
     properties: {
         entity        : { label: "String id of entity to display", type: "string", usage: "required in spec" },
     }
-};
+});
 
 x.page.Delete.setup = function () {
     var key;
@@ -398,16 +382,13 @@ x.page.Delete.setup.doc = {
 
 
 
-x.page.FormParams = x.page.FormBase.clone({
-    id: "FormParams"
-});
-x.page.FormParams.doc = {
-    location: "x.sections",
+x.page.addClone(x.page.FormBase, {
+    id: "FormParams",
     purpose: "To represent a set of paramteres being updated, which are not persisted in the database",
     properties: {
         fieldset: { label: "FieldSet to which the parameter fields should be added", type: "x.data.FieldSet", usage: "use methods" }
     }
-};
+});
 
 x.page.FormParams.setup = function () {
     x.log.functionStart("setup", this, arguments);

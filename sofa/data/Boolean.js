@@ -1,20 +1,18 @@
 /*global x, java */
 "use strict";
 
-//---------------------------------------------------------------------------- Boolean
-x.data.Boolean = x.data.Text.clone({
+
+x.data.addClone(x.data.Text, {
     id                      : "Boolean",
     css_type                : "boolean",
     search_oper_list        : "sy.search_oper_list_boolean",
     auto_search_oper        : "",
     data_length             : 1,
-    val                     : "N"
-});
-x.data.Boolean.doc = {
+    val                     : "N",
     purpose                 : "To represent a yes/no field",
     properties              : {
     }
-};
+});
 
 x.data.Boolean.set = function (new_val) {
     x.log.functionStart("set", this, arguments);

@@ -2,24 +2,18 @@
 "use strict";
 
 
-x.ac.Session = x.base.Base.clone({
+x.ac.addEntity({
     id              : "Session",
     max_inactive_interval: (60 * 30),            // in seconds, 30 mins
-});
-
-x.ac.Session.doc = {
-    location        : "x",
     purpose         : "To represent a user interacting with the system",
     properties      : {
-//        connection              : { label: "SQL connection object to use in transactions, obtained on log-in", type: "x.sql.Connection", usage: "use methods only" },
         chameleon               : { label: "User id of 'real' user who logged in as Chameleon, if application", type: "string", usage: "read only" },
         list_section            : { label: "Object map of page section objects against their full ids", type: "object", usage: "read only" },
         delegaters              : { label: "Object map of other users who are delegating to this user", type: "object", usage: "read only" },
-//        non_trans_connection    : { label: "Database connection independent of session-level transactions", type: "x.sql.Connection", usage: "use methods only" },
         password_reminder_period: { label: "Day period to request a password change", type: "number", usage: "read only" },
         force_password_change   : { label: "Boolean that determines whether it is required a password change", type: "boolean", usage: "read, write" },
     }
-};
+});
 
 x.ac.Session.clone = function (spec) {
     var session;

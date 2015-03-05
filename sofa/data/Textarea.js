@@ -1,8 +1,8 @@
 /*global x, java */
 "use strict";
 
-//---------------------------------------------------------------------------- Textarea
-x.data.Textarea = x.data.Text.clone({
+
+x.data.addClone(x.data.Text, {
     id              : "Textarea",
     css_type        : "textarea",
     detokenize      : false,
@@ -18,15 +18,13 @@ x.data.Textarea = x.data.Text.clone({
       doc_root_path : "olht/",
     video_width     : 848,
     video_height    : 551,
-});
-x.data.Textarea.doc = {
     purpose                 : "To represent a multi-line text block field",
     properties              : {
         rows                : { label: "Initial number of rows to render, defaults to 5 (may be a growfield, however)", type: "number", usage: "optional in spec" },
         detokenize          : { label: "Identify tokens wrapped in braces ('{' and '}') and attempt to replace them with dynamic values or mark-up, defaults to false", type: "boolean", usage: "optional in spec" },
         separate_row_in_form: { label: "Whether or not this field should be rendered separately, below other fields, in a form, defaults to true", type: "boolean", usage: "optional in spec" },
     }
-};
+});
 
 
 x.data.Textarea.set = function (new_val) {

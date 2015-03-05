@@ -1,8 +1,8 @@
 /*global x, java */
 "use strict";
 
-//---------------------------------------------------------------------------- Option
-x.data.Option = x.data.Text.clone({
+
+x.data.addClone(x.data.Text, {
     id                      : "Option",
     css_type                : "option",
     search_oper_list        : "sy.search_oper_list_option",
@@ -10,15 +10,13 @@ x.data.Option = x.data.Text.clone({
     unknown_label           : "[unknown]: ",
 //    tb_span               : 2,
     tb_input_list           : "input-medium",
-    data_length             : 10
-});
-x.data.Option.doc = {
+    data_length             : 10,
     purpose                 : "To represent a single-valued option field, supported by an LoV",
     properties              : {
         list                : { label: "String id of the LoV supporting this field", type: "string", usage: "required in spec" },
         lov                 : { label: "LoV object supporting this field", type: "x.data.LoV", usage: "use methods" }
     }
-};
+});
 
 
 x.data.Option.instantiate = function () {

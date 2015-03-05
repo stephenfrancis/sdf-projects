@@ -1,10 +1,9 @@
 /*global x, java */
 "use strict";
 
-x.entities.sy_list_item = x.data.Entity.clone({
-    id              : "sy_list_item",
+x.sy.addEntity({
+    id              : "ListItem",
     title           : "List Item",
-    area            : "sy",
 //    primary_key     : "list,id",    // Specified like this to avoid issues with multi-part keys from changing sequence
 //    parent_entity   : "sy_list",
 //    link_field      : "list",
@@ -16,7 +15,7 @@ x.entities.sy_list_item = x.data.Entity.clone({
 //    pack_condition  : "list in ( select distinct _key from sy_list where area='{module}' )",
 });
 
-x.entities.sy_list_item.addFields([
+x.sy.ListItem.addFields([
 //    { id: "seq_number"  , label: "Seq"       , type: "Number"   , mandatory: true, search_criterion: true, list_column: true, decimal_digits: 0, sort_seq: 1 },
 //    { id: "list"        , label: "List"      , type: "Reference", mandatory: true, search_criterion: true, list_column: true, ref_entity: "sy_list" },
     { id: "id"          , label: "Id"        , type: "Text"     , mandatory: true, list_column: true, data_length: 10 },

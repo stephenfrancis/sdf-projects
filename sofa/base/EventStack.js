@@ -64,7 +64,7 @@ x.EventStack.trigger.doc = {
 };
 
 
-x.Script = x.Base.clone({
+x.Script = x.base.Base.clone({
     id: "Script",
     active: true
 });

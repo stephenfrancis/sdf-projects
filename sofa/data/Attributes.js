@@ -1,20 +1,18 @@
 /*global x, java */
 "use strict";
 
-//---------------------------------------------------------------------------- Attributes
-x.data.Attributes = x.data.Text.clone({
+
+x.data.addClone(x.data.Text, {
     id                      : "Attributes",
     css_type                : "attributes",
     search_oper_list        : "sy.search_oper_list_attr",
     auto_search_oper        : "AN",
-});
-x.data.Attributes.doc = {
     purpose: "To represent a multi-valued field with options from an LoV",
     properties: {
         list                : { label: "String id of the LoV supporting this field", type: "string", usage: "required in spec" },
         lov                 : { label: "LoV object supporting this field", type: "x.data.LoV", usage: "use methods" }
     }
-};
+});
 
 
 x.data.Attributes.getLoV = function () {

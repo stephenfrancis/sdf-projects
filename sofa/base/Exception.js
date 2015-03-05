@@ -1,7 +1,7 @@
 /*global x, java */
 "use strict";
 
-x.Exception = x.Base.clone({ id: "Exception" });
+x.Exception = x.base.Base.clone({ id: "Exception" });
 x.Exception.doc = {
     location : "x",
     file: "$Header: /rsl/rsl_app/core/base/Exception.js,v 1.10 2014/07/16 15:48:08 francis Exp $",
@@ -13,7 +13,7 @@ x.Exception.doc = {
 x.Exception.clone = function (props) {
     var obj;
     x.log.functionStart("clone", this, arguments);
-    obj = x.Base.clone.call(this, props);
+    obj = x.base.Base.clone.call(this, props);
     obj.props_str = props.view();
     obj.stack_trace = "";
     return obj;
