@@ -143,20 +143,14 @@ x.page.ListBase.setLinkField.doc = {
 };
 
 
-x.page.ListBase.render = function (element, render_opts) {
-//    var sctn_elem;
+x.page.ListBase.render = function (parent_elmt, render_opts) {
     x.log.functionStart("render", this, arguments);
-    x.page.Section.render.call(this, element, render_opts);
-    if (render_opts.test === true) {
-        this.test_values = [];
-    }
+    x.page.Section.render.call(this, parent_elmt, render_opts);
     if (this.repeat_form) {
         this.renderInitialize(render_opts);
         return this.renderBody(render_opts);
     }
-//    sctn_elem = x.page.Section.render.call(this, element, render_opts).addChild("div");
     this.renderList(render_opts);
-//    return sctn_elem;
 };
 x.page.ListBase.render.doc = {
     purpose: "Generate HTML output for this section, given its current state; calls renderBody() if 'repeat_form' else renderList()",
@@ -209,16 +203,16 @@ x.page.ListBase.initializeColumnPaging.doc = {
 x.page.ListBase.renderList = function (render_opts) {
     x.log.functionStart("renderList", this, arguments);
     this.renderInitialize(render_opts);
-    this.table_elem = null;
+    this.table_elmt = null;
     if (!this.hide_table_if_empty) {
         this.getTableElement(render_opts);
     }
     this.renderBody(render_opts);
-    if (this.sctn_elem) {
-        if (!this.table_elem && this.row_count === 0) {
-            this.sctn_elem.addText(this.text_no_rows);
-        } else if (this.table_elem && this.show_footer) {
-            this.renderFooter(this.table_elem, render_opts);
+    if (this.sctn_elmt) {
+        if (!this.table_elmt && this.row_count === 0) {
+            this.sctn_elmt.text(this.text_no_rows);
+        } else if (this.table_elmt && this.show_footer) {
+            this.renderFooter(this.table_elmt, render_opts);
         }
     }
 };
@@ -231,30 +225,29 @@ x.page.ListBase.renderList.doc = {
 
 x.page.ListBase.getTableElement = function (render_opts) {
     var css_class,
-        div_scroll;
+        parent_elmt;
     x.log.functionStart("getTableElement", this, arguments);
-    if (!this.table_elem) {
+    if (!this.table_elmt) {
+        parent_elmt = this.getSectionElement();
         css_class = "css_list table table-bordered table-condensed table-hover";
         if (this.right_align_numbers) {
             css_class += " css_right_align_numbers";
         }
         if (this.horiz_scroll) {
-            div_scroll = this.getSectionElement().addChild("div", null, "css_scroll");        
-            this.table_elem = div_scroll.addChild("table", this.id, css_class);
-        } else {
-            this.table_elem = this.getSectionElement().addChild("table", this.id, css_class);
+            parent_elmt = parent_elmt.makeElement("div", "css_scroll");        
         }
+        this.table_elmt = parent_elmt.makeElement("table", css_class, this.id);
         
         if (this.show_header) {
-            this.renderHeader(this.table_elem, render_opts);
+            this.renderHeader(this.table_elmt, render_opts);
         }
     }
-    return this.table_elem;
+    return this.table_elmt;
 };
 x.page.ListBase.getTableElement.doc = {
-    purpose: "To return the 'table_elem' XmlStream object for the HTML table, creating it if it doesn't already exist",
+    purpose: "To return the 'table_elmt' XmlStream object for the HTML table, creating it if it doesn't already exist",
     args   : "render_opts",
-    returns: "table_elem XmlStream object for the HTML table"
+    returns: "table_elmt XmlStream object for the HTML table"
 };
 
 
@@ -268,28 +261,29 @@ x.page.ListBase.getActualColumns.doc = {
 };
 
 
-x.page.ListBase.renderHeader = function (table_elem, render_opts) {
-    var row_elem,
+x.page.ListBase.renderHeader = function (table_elmt, render_opts) {
+    var row_elmt,
         total_visible_columns = 0,
         i;
     x.log.functionStart("renderHeader", this, arguments);
-    row_elem = table_elem.addChild("thead").addChild("tr");
+    thead_elmt = table_elmt.makeElement("thead");
+      row_elmt = thead_elmt.makeElement("tr");
     for (i = 0; i < this.level_break_depth; i += 1) {
-        row_elem.addChild("th", null, "css_level_break_header");
+        row_elmt.makeElement("th", "css_level_break_header");
     }
     this.columns.each(function(col) {
         if (col.isVisibleColumn(render_opts)) {
-            col.renderHeader(row_elem, render_opts);
+            col.renderHeader(row_elmt, render_opts);
             total_visible_columns += 1;
         }
     });
     this.total_visible_columns = total_visible_columns;
-    return row_elem;
+    return row_elmt;
 };
 x.page.ListBase.renderHeader.doc = {
     purpose: "To generate the HTML thead element and its content, calling renderHeader() on each visible column",
     args   : "xmlstream table element object, render_opts",
-    returns: "row_elem xmlstream object representing the th row"
+    returns: "row_elmt xmlstream object representing the th row"
 };
 
 
@@ -304,19 +298,13 @@ x.page.ListBase.renderBody.doc = {
 
 
 x.page.ListBase.renderRow = function (render_opts, row_obj) {
-    var table_elem, obj = {};
-    if (render_opts.test === true) {
-        row_obj.each(function (f) {
-            obj[f.id] = f.get();
-        });
-        this.test_values.push(obj);
-    }
+    var table_elmt;
     x.log.functionStart("renderRow", this, arguments);
-    table_elem = this.getTableElement(render_opts);
+    table_elmt = this.getTableElement(render_opts);
     if (this.repeat_form) {
-        return this.renderRepeatForm(table_elem, render_opts, row_obj);    // element is div
+        return this.renderRepeatForm(table_elmt, render_opts, row_obj);    // element is div
     }
-    return this.renderListRow(table_elem, render_opts, row_obj);        // element is table
+    return this.renderListRow(table_elmt, render_opts, row_obj);        // element is table
 };
 x.page.ListBase.renderRow.doc = {
     purpose: "To render an object (usually a fieldset) as a row in the table by calling renderListRow(), or as a form by \
@@ -326,42 +314,42 @@ calling renderRepeatForm() if 'repeat_form' is set",
 };
 
 
-x.page.ListBase.renderListRow = function (table_elem, render_opts, row_obj) {
-    var row_elem,
+x.page.ListBase.renderListRow = function (table_elmt, render_opts, row_obj) {
+    var row_elmt,
         css_class,
         i;
     x.log.functionStart("renderListRow", this, arguments);
     css_class = this.getRowCSSClass();
 //    this.updateAggregations();
     this.row_count += 1;
-    row_elem = table_elem.addChild("tr", null, css_class);
-    this.rowURL(row_elem, row_obj);
+    row_elmt = table_elmt.makeElement("tr", css_class);
+    this.rowURL(row_elmt, row_obj);
     this.addRowToKeyArray(row_obj);
     for (i = 0; i < this.level_break_depth; i += 1) {
-        row_elem.addChild("td");
+        row_elmt.makeElement("td");
     }
     for (i = 0; i < this.columns.length(); i += 1) {
         if (this.columns.get(i).isVisibleColumn(render_opts)) {
-            this.columns.get(i).renderCell(row_elem, render_opts, i, row_obj);
+            this.columns.get(i).renderCell(row_elmt, render_opts, i, row_obj);
         }
     }
     for (i = 0; i < this.columns.length(); i += 1) {
-        this.columns.get(i).renderAdditionalRow(table_elem, render_opts, i, row_obj, css_class);
+        this.columns.get(i).renderAdditionalRow(table_elmt, render_opts, i, row_obj, css_class);
     }
-    return row_elem;
+    return row_elmt;
 };
 x.page.ListBase.renderListRow.doc = {
     purpose: "To render an object (usually a fieldset) as an HTML tr element, calling getRowCSSClass(), rowURL(), \
 addRowToKeyArray(), and renderCell() or renderAdditionalRow() on each visible column",
-    args   : "table_elem (xmlstream), render_opts, row_obj",
-    returns: "row_elem (xmlstream)"
+    args   : "table_elmt (xmlstream), render_opts, row_obj",
+    returns: "row_elmt (xmlstream)"
 };
 
 
-x.page.ListBase.renderRepeatForm = function (element, render_opts, row_obj) {
+x.page.ListBase.renderRepeatForm = function (parent_elmt, render_opts, row_obj) {
     x.log.functionStart("renderRepeatForm", this, arguments);
     this.fieldset = row_obj;
-    return x.page.FormBase.render.call(this, element, render_opts);
+    return x.page.FormBase.render.call(this, parent_elmt, render_opts);
 };
 x.page.ListBase.renderRepeatForm.doc = {
     purpose: "To render an object (usually a fieldset) as a form block, using FormBase.render() (not implemented)",
@@ -391,10 +379,10 @@ x.page.ListBase.getRowCSSClass.doc = {
 };
 
 
-x.page.ListBase.rowURL = function (row_elem, row_obj) {};
+x.page.ListBase.rowURL = function (row_elmt, row_obj) {};
 x.page.ListBase.rowURL.doc = {
     purpose: "To return a string URL for the row, if appropriate",
-    args   : "row_elem (xmlstream), row_obj (usually a fieldset)",
+    args   : "row_elmt (xmlstream), row_obj (usually a fieldset)",
     returns: "string URL or null or undefined"
 };
 
@@ -407,121 +395,115 @@ x.page.ListBase.addRowToKeyArray.doc = {
 };
 
 
-x.page.ListBase.renderFooter = function (table_elem, render_opts) {
-    var foot_elem,
-        ctrl_elem;
+x.page.ListBase.renderFooter = function (table_elmt, render_opts) {
+    var foot_elmt,
+        ctrl_elmt;
     x.log.functionStart("renderFooter", this, arguments);
-//    foot_elem = sctn_elem.addChild("div", null, "css_list_footer");
-    foot_elem = table_elem.addChild("tfoot").addChild("tr").addChild("td");
-    foot_elem.attribute("colspan", String(this.getActualColumns()));
+    foot_elmt = table_elmt.makeElement("tfoot").makeElement("tr").makeElement("td");
+    foot_elmt.attr("colspan", String(this.getActualColumns()));
     if (render_opts.dynamic_page !== false) {
-        this.renderRowAdder(foot_elem, render_opts);
-        this.renderListPager(foot_elem, render_opts);
-        this.renderColumnPager(foot_elem, render_opts);
+        this.renderRowAdder(foot_elmt, render_opts);
+        this.renderListPager(foot_elmt, render_opts);
+        this.renderColumnPager(foot_elmt, render_opts);
         if (this.list_advanced_mode && this.allow_choose_cols) {
-            ctrl_elem = foot_elem.addChild("span", null, "css_list_col_chooser");
-            ctrl_elem.attribute("onclick", "y.listColumnChooser(this)");
-            ctrl_elem.addChild("a", "list_choose_cols_" + this.id, "css_uni_icon_lrg")
-                .attribute("title", "Choose Columns to View")
-                .addText(this.column_chooser_icon, true);
-            this.renderColumnChooser(foot_elem, render_opts);
+            ctrl_elmt = foot_elmt.makeElement("span", "css_list_col_chooser");
+            ctrl_elmt.attr("onclick", "y.listColumnChooser(this)");
+            ctrl_elmt.makeElement("a", "css_uni_icon_lrg", "list_choose_cols_" + this.id)
+                .attr("title", "Choose Columns to View")
+                .html(this.column_chooser_icon);
+            this.renderColumnChooser(foot_elmt, render_opts);
         }
     } else {
-        this.renderRowCount(foot_elem, render_opts);
+        this.renderRowCount(foot_elmt, render_opts);
     }
-    return foot_elem;
+    return foot_elmt;
 };
 x.page.ListBase.renderFooter.doc = {
     purpose: "To render the table footer, as a containing div, calling renderRowAdder(), render the column-chooser icon, \
 calling renderListPager() and renderColumnChooser(), or if not a dynamic output, calling renderRowCount()",
-    args   : "sctn_elem (xmlstream), render_opts",
-    returns: "foot_elem (xmlstream) if dynamic"
+    args   : "sctn_elmt (xmlstream), render_opts",
+    returns: "foot_elmt (xmlstream) if dynamic"
 };
 
 
-x.page.ListBase.renderRowAdder = function (foot_elem, render_opts) {
+x.page.ListBase.renderRowAdder = function (foot_elmt, render_opts) {
     x.log.functionStart("renderRowAdder", this, arguments);
 };
 x.page.ListBase.renderRowAdder.doc = {
     purpose: "To render the control for adding rows (either a 'plus' type button or a drop-down of keys) if appropriate",
-    args   : "foot_elem (xmlstream), render_opts",
+    args   : "foot_elmt (xmlstream), render_opts",
     returns: "nothing"
 };
 
 
-x.page.ListBase.renderListPager = function (foot_elem, render_opts) {
-    var pagr_elem,
-        ctrl_elem;
+x.page.ListBase.renderListPager = function (foot_elmt, render_opts) {
+    var pagr_elmt,
+        ctrl_elmt;
     x.log.functionStart("renderListPager", this, arguments);
-    pagr_elem = foot_elem.addChild("span", null, "css_row_pager");
-    ctrl_elem = pagr_elem.addChild("span", null, "css_list_control");
+    pagr_elmt = foot_elmt.makeElement("span", "css_row_pager");
+    ctrl_elmt = pagr_elmt.makeElement("span", "css_list_control");
     if (this.recordset > 1) {
-        ctrl_elem.addChild("a", "list_set_frst_" + this.id, "css_cmd css_uni_icon")
-            .attribute("title", "first recordset")
-            .addText(this.frst_recordset_icon, true);
-        ctrl_elem.addChild("a", "list_set_prev_" + this.id, "css_cmd css_uni_icon")
-            .attribute("title", "previous recordset")
-            .addText(this.prev_recordset_icon, true);
+        ctrl_elmt.makeElement("a", "css_cmd css_uni_icon", "list_set_frst_" + this.id)
+            .attr("title", "first recordset")
+            .html(this.frst_recordset_icon);
+        ctrl_elmt.makeElement("a", "css_cmd css_uni_icon", "list_set_prev_" + this.id)
+            .attr("title", "previous recordset")
+            .html(this.prev_recordset_icon);
     }
-    this.renderRowCount(pagr_elem, render_opts);
-    ctrl_elem = pagr_elem.addChild("span", null, "css_list_control");
+    this.renderRowCount(pagr_elmt, render_opts);
+    ctrl_elmt = pagr_elmt.makeElement("span", "css_list_control");
 
 //    if (this.open_ended_recordset || (this.recordset_last > 1 && this.recordset < this.recordset_last)) {
     if (this.subsequent_recordset) {
-        ctrl_elem.addChild("a", "list_set_next_" + this.id, "css_cmd css_uni_icon")
-            .attribute("title", "next recordset")
-            .addText(this.next_recordset_icon, true);
+        ctrl_elmt.makeElement("a", "css_cmd css_uni_icon", "list_set_next_" + this.id)
+            .attr("title", "next recordset")
+            .html(this.next_recordset_icon);
     }
     if (this.subsequent_recordset && !this.open_ended_recordset) {
-        ctrl_elem.addChild("a", "list_set_last_" + this.id, "css_cmd css_uni_icon")
-            .attribute("title", "last recordset")
-            .addText(this.last_recordset_icon, true);
+        ctrl_elmt.makeElement("a", "css_cmd css_uni_icon", "list_set_last_" + this.id)
+            .attr("title", "last recordset")
+            .html(this.last_recordset_icon);
     }
 };
 x.page.ListBase.renderListPager.doc = {
     purpose: "To render the player-style control for pages back and forth through recordsets of data, if appropriate",
-    args   : "foot_elem (xmlstream), render_opts",
+    args   : "foot_elmt (xmlstream), render_opts",
     returns: "nothing"
 };
 
 
-x.page.ListBase.renderColumnPager = function (foot_elem, render_opts) {
-    var pagr_elem,
-        ctrl_elem;
+x.page.ListBase.renderColumnPager = function (foot_elmt, render_opts) {
+    var pagr_elmt,
+        ctrl_elmt;
     x.log.functionStart("renderColumnPager", this, arguments);
     if (!this.max_visible_columns) {
         return;
     }
-    pagr_elem = foot_elem.addChild("span", null, "css_column_pager");
-    ctrl_elem = pagr_elem.addChild("span", null, "css_list_control");
+    pagr_elmt = foot_elmt.makeElement("span", "css_column_pager");
+    ctrl_elmt = pagr_elmt.makeElement("span", "css_list_control");
     if (this.current_column_page > 0) {
-//        ctrl_elem.addChild("a", "column_page_frst_" + this.id, "css_cmd css_uni_icon")
-//            .attribute("title", "first column page")
-//            .addText(this.frst_recordset_icon, true);
-        ctrl_elem.addChild("a", "column_page_prev_" + this.id, "css_cmd css_uni_icon")
-            .attribute("title", "previous column page")
-            .addText(this.prev_columnset_icon, true);
+        ctrl_elmt.makeElement("a", "css_cmd css_uni_icon", "column_page_prev_" + this.id)
+            .attr("title", "previous column page")
+            .html(this.prev_columnset_icon);
     }
-    pagr_elem.addChild("span", null, "css_list_rowcount", "column page " + (this.current_column_page + 1) + " of " + this.total_column_pages);
+    pagr_elmt.makeElement("span", "css_list_rowcount")
+        .text("column page " + (this.current_column_page + 1) + " of " + this.total_column_pages);
 
     if ((this.current_column_page + 1) < this.total_column_pages) {
-        ctrl_elem = pagr_elem.addChild("span", null, "css_list_control");
-        ctrl_elem.addChild("a", "column_page_next_" + this.id, "css_cmd css_uni_icon")
-            .attribute("title", "next column page")
-            .addText(this.next_columnset_icon, true);
-//        ctrl_elem.addChild("a", "column_page_last_" + this.id, "css_cmd css_uni_icon")
-//            .attribute("title", "last column page")
-//            .addText(this.last_recordset_icon, true);
+        ctrl_elmt = pagr_elmt.makeElement("span", "css_list_control");
+        ctrl_elmt.makeElement("a", "css_cmd css_uni_icon", "column_page_next_" + this.id)
+            .attr("title", "next column page")
+            .html(this.next_columnset_icon);
     }
 };
 x.page.ListBase.renderColumnPager.doc = {
     purpose: "To render the player-style control for column pages back and forth through groups of non-sticky visible columns, if appropriate",
-    args   : "foot_elem (xmlstream), render_opts",
+    args   : "foot_elmt (xmlstream), render_opts",
     returns: "nothing"
 };
 
 
-x.page.ListBase.renderRowCount = function (foot_elem, render_opts) {
+x.page.ListBase.renderRowCount = function (foot_elmt, render_opts) {
     var text;
     x.log.functionStart("renderRowCount", this, arguments);
     if (this.recordset === 1 && !this.subsequent_recordset) {
@@ -542,58 +524,45 @@ x.page.ListBase.renderRowCount = function (foot_elem, render_opts) {
             text = this.row_count + " rows";
         }
     }
-    return foot_elem.addChild("span", null, "css_list_rowcount", text);
+    return foot_elmt.makeElement("span", "css_list_rowcount").text(text);
 };
 x.page.ListBase.renderRowCount.doc = {
     purpose: "To render a simple span showing the number of rows, and the sub-set shown, if appropriate",
-    args   : "foot_elem (xmlstream), render_opts",
+    args   : "foot_elmt (xmlstream), render_opts",
     returns: "nothing"
 };
 
 
-x.page.ListBase.renderColumnChooser = function (foot_elem, render_opts) {
-    var ctrl_elem,
-        filter_elem,
-        filter_input,
+x.page.ListBase.renderColumnChooser = function (foot_elmt, render_opts) {
+    var   ctrl_elmt,
+        filter_elmt,
         i,
         col;
     x.log.functionStart("renderColumnChooser", this, arguments);
     if (this.allow_choose_cols) {
-        ctrl_elem = foot_elem.addChild("div", null,
-            "css_list_choose_cols" + (this.show_choose_cols ? "" : " css_hide"));
-        
-        filter_elem = ctrl_elem.addChild("span", null, "css_list_cols_filter");
-//        filter_elem.addChild("label")
-//            .attribute("for" , "cols_filter_" + this.id)
-//            .addText("Filter Columns: ");
-        filter_input = filter_elem.addChild("input", null, "input-medium")
-            .attribute("placeholder", "Filter Columns")
-            .attribute("type", "text")
-            .attribute("name", "cols_filter_" + this.id);
-        if (this.cols_filter) {
-            filter_input.attribute("value", this.cols_filter);
-        }
-//        filter_elem.addChild("a", "cols_filter_close_" + this.id, "cols_filter_clear close")
-//            .attribute("title", "Clear Text")
-//            .addText("&times;", true);
-        
+          ctrl_elmt = foot_elmt.makeElement("div", "css_list_choose_cols" + (this.show_choose_cols ? "" : " css_hide"));
+        filter_elmt = ctrl_elmt.makeElement("span", "css_list_cols_filter");
+        filter_elmt.makeInput("text", "input-medium", null, this.cols_filter)
+            .attr("placeholder", "Filter Columns")
+            .attr("name", "cols_filter_" + this.id);
+
         for (i = 0; i < this.columns.length(); i += 1) {
             col = this.columns.get(i);
             if (!col.label.trim()) {
                 continue;
             }
-            ctrl_elem.addChild("button", "list_" + this.id + "_col_" + col.id + (col.visible ? "_hide" : "_show"),
-                    "btn btn-mini css_cmd " + (col.visible ? "active" : ""))
-                .attribute("type", "button")
-                .attribute("data-toggle", "button")
-                .addText(col.label);
+            ctrl_elmt.makeElement("button", "btn btn-mini css_cmd " + (col.visible ? "active" : ""),
+                    "list_" + this.id + "_col_" + col.id + (col.visible ? "_hide" : "_show"))
+//                .attr("type", "button")
+                .attr("data-toggle", "button")
+                .text(col.label);
         }
     }
 };
 x.page.ListBase.renderColumnChooser.doc = {
     purpose: "To render a column-chooser control (a set of push-state buttons represents all available columns, with the \
 currently-shown columns pushed in), allowing the user to choose which columns to see",
-    args   : "foot_elem (xmlstream), render_opts",
+    args   : "foot_elmt (xmlstream), render_opts",
     returns: "nothing"
 };
 
@@ -690,7 +659,7 @@ x.page.ListBase.updateAggregations.doc = {
 x.page.ListBase.renderAggregations = function (render_opts) {
     var first_aggr_col = -1,
         pre_aggr_colspan = 0,
-        row_elem,
+        row_elmt,
         i,
         col;
 
@@ -708,12 +677,14 @@ x.page.ListBase.renderAggregations = function (render_opts) {
     if (first_aggr_col === -1) {        // no aggregation
         return;
     }
-    row_elem = this.getTableElement(render_opts).addChild("tr", null, "css_row_total");
+    row_elmt = this.getTableElement(render_opts).makeElement("tr", "css_row_total");
     if (pre_aggr_colspan > 0) {
-        row_elem.addChild("td").attribute("colspan", pre_aggr_colspan.toFixed(0)).addText(this.text_total_row);
+        row_elmt.makeElement("td")
+            .attr("colspan", pre_aggr_colspan.toFixed(0))
+            .text(this.text_total_row);
     }
     for (i = first_aggr_col; i < this.columns.length(); i += 1) {
-        this.columns.get(i).renderAggregation(row_elem, render_opts, 0, this.row_count);
+        this.columns.get(i).renderAggregation(row_elmt, render_opts, 0, this.row_count);
     }
 };
 x.page.ListBase.renderAggregations.doc = {
@@ -723,11 +694,11 @@ x.page.ListBase.renderAggregations.doc = {
 };
 
 
-x.page.ListBase.renderRepeat = function (element, render_opts) {
+x.page.ListBase.renderRepeat = function (parent_elmt, render_opts) {
     x.log.functionStart("renderRepeat", this, arguments);
     while (this.query.next()) {
         this.record.populate(this.query.resultset);
-        this.renderRow(element, render_opts, this.record);
+        this.renderRow(parent_elmt, render_opts, this.record);
     }
     this.query.reset();
 };
@@ -844,8 +815,8 @@ x.page.ListBase.Column.updateAggregations.doc = {
 
 
 x.page.ListBase.Column.renderHeader = function (row_elmt, render_opts) {
-    var elmt,
-        elmt_a,
+    var     th_elmt,
+        anchor_elmt,
         css_class = this.css_class;
     x.log.functionStart("renderHeader", this, arguments);
     if (this.field) {
@@ -854,28 +825,27 @@ x.page.ListBase.Column.renderHeader = function (row_elmt, render_opts) {
     if (this.freeze) {
         css_class += " css_col_freeze";
     }
-    elmt = row_elmt.addChild("th", null, css_class);
+    th_elmt = row_elmt.makeElement("th", css_class);
     if (this.width) {
-        elmt.attribute("style", "width: " + this.width);
+        th_elmt.attr("style", "width: " + this.width);
     }
     if (this.min_width) {
-        elmt.attribute("style", "min-width: " + this.min_width);
+        th_elmt.attr("style", "min-width: " + this.min_width);
     }
     if (this.max_width) {
-        elmt.attribute("style", "max-width: " + this.max_width);
+        th_elmt.attr("style", "max-width: " + this.max_width);
     }
     if (this.description) {
-        elmt_a = elmt.addChild("a");
-        elmt_a.attribute("rel"  , "tooltip");
-        elmt_a.attribute("title", this.description);
-        elmt_a.attribute("class", "css_uni_icon");
-        elmt_a.addText(this.hover_text_icon, true);
+        anchor_elmt = th_elmt.makeElement("a", "css_uni_icon");
+        anchor_elmt.attr("rel"  , "tooltip");
+        anchor_elmt.attr("title", this.description);
+        anchor_elmt.html(this.hover_text_icon);
     }
     if (this.owner.section.list_advanced_mode && this.owner.section.sortable && this.sortable !== false
             && render_opts.dynamic_page !== false && this.query_column) {
-        elmt = this.renderSortLink(elmt);
+        elmt = this.renderSortLink(th_elmt);
     }
-    elmt.addText(this.label);
+    th_elmt.text(this.label);
 };
 x.page.ListBase.Column.renderHeader.doc = {
     purpose: "Generate HTML output for this column's heading, as a th element",
@@ -884,11 +854,11 @@ x.page.ListBase.Column.renderHeader.doc = {
 };
 
 
-x.page.ListBase.Column.renderSortLink = function (elem) {
+x.page.ListBase.Column.renderSortLink = function (parent_elmt) {
     var sort_seq_asc  = 0,
         sort_seq_desc = 0,
-        anchor_elem,
-          span_elem,
+        anchor_elmt,
+          span_elmt,
         description;
     x.log.functionStart("renderSortLink", this, arguments);
     if (typeof this.query_column.sort_seq === "number" && this.query_column.sort_seq < 3) {
@@ -898,26 +868,26 @@ x.page.ListBase.Column.renderSortLink = function (elem) {
             sort_seq_asc  = this.query_column.sort_seq + 1;
         }
     }
-    anchor_elem = elem.addChild("a", null, "css_cmd css_list_sort");
+    anchor_elmt = parent_elmt.makeElement("a", "css_cmd css_list_sort");
     if (sort_seq_asc === 1 || sort_seq_desc > 1) {
         description = "Sort descending at top level";
-        anchor_elem.attribute("id"   , "list_sort_desc_" + this.owner.section.id + "_" + this.id);
+        anchor_elmt.attr("id"   , "list_sort_desc_" + this.owner.section.id + "_" + this.id);
     } else {
         description = "Sort ascending at top level";
-        anchor_elem.attribute("id"   , "list_sort_asc_"  + this.owner.section.id + "_" + this.id);
+        anchor_elmt.attr("id"   , "list_sort_asc_"  + this.owner.section.id + "_" + this.id);
     }
-    anchor_elem.attribute("title", description);
+    anchor_elmt.attr("title", description);
     if (sort_seq_asc > 0) {
-        span_elem = anchor_elem.addChild("span", null, "css_uni_icon");
-        span_elem.attribute("style", "opacity: " + (0.3 * (4 - sort_seq_asc )).toFixed(1));
-        span_elem.addText(this.owner.section.sort_arrow_asc_icon , true);
+        span_elmt = anchor_elmt.makeElement("span", "css_uni_icon");
+        span_elmt.attr("style", "opacity: " + (0.3 * (4 - sort_seq_asc )).toFixed(1));
+        span_elmt.html(this.owner.section.sort_arrow_asc_icon);
     }
     if (sort_seq_desc > 0) {
-        span_elem = anchor_elem.addChild("span", null, "css_uni_icon");
-        span_elem.attribute("style", "opacity: " + (0.3 * (4 - sort_seq_desc)).toFixed(1));
-        span_elem.addText(this.owner.section.sort_arrow_desc_icon, true);
+        span_elmt = anchor_elmt.makeElement("span", "css_uni_icon");
+        span_elmt.attr("style", "opacity: " + (0.3 * (4 - sort_seq_desc)).toFixed(1));
+        span_elmt.html(this.owner.section.sort_arrow_desc_icon);
     }
-    return anchor_elem;
+    return anchor_elmt;
 };
 x.page.ListBase.Column.renderSortLink.doc = {
     purpose: "To render the heading content of a sortable column as an anchor with label text, which when clicked brings \
@@ -928,11 +898,11 @@ current position in the sort order as an arrow to the left of a corresponding op
 };
 
 
-x.page.ListBase.Column.renderSortIcons = function (elem) {
+x.page.ListBase.Column.renderSortIcons = function (parent_elmt) {
     var sort_seq_asc,
         sort_seq_desc;
     x.log.functionStart("renderSortIcons", this, arguments);
-    sort_seq_asc = 0;
+    sort_seq_asc  = 0;
     sort_seq_desc = 0;
     if (typeof this.query_column.sort_seq === "number" && this.query_column.sort_seq < 3) {
         if (this.query_column.sort_desc) {
@@ -941,16 +911,16 @@ x.page.ListBase.Column.renderSortIcons = function (elem) {
             sort_seq_asc  = this.query_column.sort_seq + 1;
         }
     }
-    elem.addChild("a")
-        .attribute("title", "Sort Ascending")
-        .addChild("img", "list_sort_asc_"  + this.owner.section.id + "_" + this.id, "css_cmd")
-        .attribute("alt", "Sort Ascending")
-        .attribute("src", "../rsl_shared/style/icons/ico_sort_" + sort_seq_asc  + "_asc.png");
-    elem.addChild("a")
-        .attribute("title", "Sort Descending")
-        .addChild("img", "list_sort_desc_" + this.owner.section.id + "_" + this.id, "css_cmd")
-        .attribute("alt", "Sort Descending")
-        .attribute("src", "../rsl_shared/style/icons/ico_sort_" + sort_seq_desc + "_desc.png");
+    parent_elmt.makeElement("a", "list_sort_asc_"  + this.owner.section.id + "_" + this.id, "css_cmd")
+        .attr("title", "Sort Ascending")
+        .makeElement("img")
+            .attr("alt", "Sort Ascending")
+            .attr("src", "../rsl_shared/style/icons/ico_sort_" + sort_seq_asc  + "_asc.png");
+    parent_elmt.makeElement("a", "list_sort_desc_" + this.owner.section.id + "_" + this.id, "css_cmd")
+        .attr("title", "Sort Descending")
+        .makeElement("img")
+            .attr("alt", "Sort Descending")
+            .attr("src", "../rsl_shared/style/icons/ico_sort_" + sort_seq_desc + "_desc.png");
 };
 x.page.ListBase.Column.renderSortIcons.doc = {
     purpose: "To render the sort controls of a sortable column as two arrows, one up and one down, which when clicked \
@@ -960,18 +930,18 @@ bring the column to the top of the sort order, and whose icon represents the pos
 };
 
 
-x.page.ListBase.Column.renderCell = function (row_elem, render_opts, i, row_obj) {
-    var cell_elem;
+x.page.ListBase.Column.renderCell = function (row_elmt, render_opts, i, row_obj) {
+    var cell_elmt;
     x.log.functionStart("renderCell", this, arguments);
     if (this.field) {
-        cell_elem = this.field.renderCell(row_elem, render_opts);
+        cell_elmt = this.field.renderCell(row_elmt, render_opts);
     } else {
-        cell_elem = row_elem.addChild("td", null, this.css_class);
+        cell_elmt = row_elmt.makeElement("td", this.css_class);
         if (this.text) {
-            cell_elem.addText(this.text);
+            cell_elmt.text(this.text);
         }
     }
-    return cell_elem;
+    return cell_elmt;
 };
 x.page.ListBase.Column.renderCell.doc = {
     purpose: "Generate HTML output for this column's cell in a table body row",
@@ -980,43 +950,43 @@ x.page.ListBase.Column.renderCell.doc = {
 };
 
 
-x.page.ListBase.Column.renderAdditionalRow = function (table_elem, render_opts, i, row_obj, css_class) {
-    var row_elem,
-        cell_elem,
+x.page.ListBase.Column.renderAdditionalRow = function (table_elmt, render_opts, i, row_obj, css_class) {
+    var row_elmt,
+        cell_elmt,
         css_type;
     x.log.functionStart("renderAdditionalRow", this, arguments);
     if (this.visible && this.separate_row && ((this.field && (this.field.getText() || this.field.isEditable())) || (!this.field && this.text))) {
-        row_elem = table_elem.addChild("tr", null, css_class);
-        this.owner.section.rowURL(row_elem);
+        row_elmt = table_elmt.makeElement("tr", css_class);
+        this.owner.section.rowURL(row_elmt);
         if (this.owner.section.allow_delete_rows) {
-            row_elem.addChild("td", null, "css_col_control");            
+            row_elmt.makeElement("td", "css_col_control");            
         }
-        row_elem.addChild("td");
-        row_elem.addChild("td", null, "css_list_additional_row_label", this.label + ":");
+        row_elmt.makeElement("td");
+        row_elmt.makeElement("td", "css_list_additional_row_label").text(this.label + ":");
         css_type  = (this.css_type || (this.field && this.field.css_type));
-        cell_elem = row_elem.addChild("td");
+        cell_elmt = row_elmt.makeElement("td");
         if (css_type) {
-            cell_elem.attribute("class", "css_type_" + css_type);
+            cell_elmt.addClass("css_type_" + css_type);
         }
-        cell_elem.attribute("colspan", (this.owner.section.total_visible_columns - 2).toFixed(0));
-//        cell_elem.addText(this.label + ":");
+        cell_elmt.attr("colspan", (this.owner.section.total_visible_columns - 2).toFixed(0));
+//        cell_elmt.text(this.label + ":");
         if (this.field) {
-            this.field.render(cell_elem, render_opts);
+            this.field.render(cell_elmt, render_opts);
         } else if (this.text) {
-            cell_elem.addText(this.text);
+            cell_elmt.text(this.text);
         }
     }
-    return cell_elem;
+    return cell_elmt;
 };
 x.page.ListBase.Column.renderAdditionalRow.doc = {
     purpose: "Generate HTML output for this column's cell in a table body row",
-    args   : "table_elem: parent xmlstream element object, render_opts, i: column index number, row_obj: row object",
+    args   : "table_elmt: parent xmlstream element object, render_opts, i: column index number, row_obj: row object",
     returns: "xmlstream element object for the cell, a td"
 };
 
 
-x.page.ListBase.Column.renderAggregation = function (row_elem, render_opts, level, rows) {
-    var cell_elem,
+x.page.ListBase.Column.renderAggregation = function (row_elmt, render_opts, level, rows) {
+    var cell_elmt,
         css_class = this.css_class,
         number_val;
     x.log.functionStart("renderAggregation", this, arguments);
@@ -1027,8 +997,7 @@ x.page.ListBase.Column.renderAggregation = function (row_elem, render_opts, leve
         if (this.freeze) {
             css_class += " css_col_freeze";
         }
-        cell_elem = row_elem.addChild("td", null, css_class);
-        cell_elem.attribute("id", this.id);
+        cell_elmt = row_elmt.makeElement("td", css_class, this.id);
         number_val = null;
         if (this.aggregation === "C") {
             number_val = rows;
@@ -1039,15 +1008,15 @@ x.page.ListBase.Column.renderAggregation = function (row_elem, render_opts, leve
         }
         if (typeof number_val === "number") {
             if (isNaN(number_val)) {
-                cell_elem.addText("n/a");
+                cell_elmt.text("n/a");
             } else if (this.field && typeof this.field.format === "function") {
-                cell_elem.addText(this.field.format(number_val));
+                cell_elmt.text(this.field.format(number_val));
             } else {
-                cell_elem.addText(number_val.toFixed(this.decimal_digits || 0));
+                cell_elmt.text(number_val.toFixed(this.decimal_digits || 0));
             }
         }
     }
-    return cell_elem;
+    return cell_elmt;
 };
 x.page.ListBase.Column.renderAggregation.doc = {
     purpose: "Generate HTML output for this column's cell in a total row",

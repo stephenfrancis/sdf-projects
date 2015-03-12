@@ -51,23 +51,19 @@ x.data.DateTime.set = function (new_val) {        // Convert a valid date in upd
     return x.data.Date.set.call(this, new_val);
 };
 
-x.data.DateTime.renderEditable = function (div, render_opts, inside_table) {
+x.data.DateTime.renderEditable = function (parent_elmt, render_opts, inside_table) {
     var val_split = [],
-        input,
-        input2;
+        input1_elmt,
+        input2_elmt;
     x.log.functionStart("renderEditable", this, arguments);
     if (!this.isBlank()) {
         val_split = this.parse(this.get(), this.internal_format, this.update_format).split(" ");
     }
-    input = div.addChild("input", null, "input-small");
-    input. attribute("placeholder", "DD/MM/YY" );
-    input. attribute("value", (val_split.length > 0 ? val_split[0] : ""));
-    input. attribute("type", "text");
-    input2 = div.addChild("input", null, "input-small");    
-    input2.attribute("placeholder", "HH:MM" );    
-    input2.attribute("value", (val_split.length > 1 ? val_split[1] : ""));
-    input2.attribute("type", "text");
-    return input;
+    input1_elmt = parent_elmt.makeInput("text", "input-small", this.getControl() + "_dt", (val_split.length > 0 ? val_split[0] : ""));
+    input1_elmt.attr("placeholder", "DD/MM/YY" );
+    input2_elmt = parent_elmt.makeInput("text", "input-small", this.getControl() + "_tm", (val_split.length > 1 ? val_split[1] : ""));
+    input2_elmt.attr("placeholder", "HH:MM" );    
+    return input1_elmt;
 };
 
 //To show up in Chrome debugger...

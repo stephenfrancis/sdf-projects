@@ -116,7 +116,7 @@ x.data.Attributes.validate = function () {
     }
 };
 
-x.data.Attributes.renderEditable = function (div, render_opts, inside_table) {
+x.data.Attributes.renderEditable = function (div_elmt, render_opts, inside_table) {
     var pieces;
     x.log.functionStart("renderEditable", this, arguments);
     this.getLoV();
@@ -124,7 +124,7 @@ x.data.Attributes.renderEditable = function (div, render_opts, inside_table) {
         x.Exception.clone({ id: "no_lov_found" });
     } else {
         pieces = this.get().split(/\|/);
-        this.lov.renderMulti(div, render_opts, pieces);
+        this.lov.renderMulti(div_elmt, render_opts, pieces);
     }
 };
 

@@ -36,24 +36,6 @@ x.base.Base.addClone = function (parent, spec) {
     return this.add(parent.clone(spec));
 };
 
-x.base.Base.forAll = function (funct) {
-    var prop;
-    for (prop in this) {
-        if (typeof this[prop] !== "function") {
-            funct(prop, this[prop]);
-        }
-    }
-};
-
-x.base.Base.forOwn = function (funct) {
-	var prop;
-	for (prop in this) {
-		if (this.hasOwnProperty(prop) && typeof this[prop] !== "function") {
-			funct(prop, this[prop]);
-		}
-	}
-};
-
 x.base.Base.walkPath = function (str, create_missing_objects) {
     var i = str.indexOf("."),
         obj;
@@ -140,21 +122,6 @@ x.base.Base.toString = function () {
 
 x.base.Base.isDescendantOf = function (obj) {
     return !!this.parent && (this.parent === obj || this.parent.isDescendantOf(obj));    
-};
-
-x.base.Base.view = function (depth, incl_inherits) {
-    var out   = "{",
-        delim = " ";
-
-    depth = depth || 0;
-    if (depth > -1) {
-        this[incl_inherits ? "forAll" : "forOwn"](function (prop_id, prop_val) {
-            out += delim + prop_id + ": " + Object.viewProp(prop_val, depth, incl_inherits);
-            delim = ", ";
-        });
-        return out + delim.substr(1) + "}";
-    }
-    return "{...}";
 };
 
 

@@ -54,25 +54,22 @@ x.page.Link.getLabel = function () {
 };
 
 // Used in context pages
-x.page.Link.render = function (element, render_opts) {
-    var elmt_link,
-        css_class;
+x.page.Link.render = function (parent_elmt, render_opts) {
+    var link_elmt;
     x.log.functionStart("render", this, arguments);
     if (this.visible) {
-        elmt_link = element.addChild("a", this.id);
-        css_class = this.css_class;
+        link_elmt = parent_elmt.makeElement("a", this.css_class, this.id);
         if (this.page_to) {
             if (!x.page.Pages[this.page_to]) {
                 throw new Error("invalid target page: " + this.page_to);
             }
-            elmt_link.attribute("href", this.getURL());
+            link_elmt.attr("href", this.getURL());
             if (this.owner.page.session.getPageTasks(this.page_to, this.getKey()).length > 0) {
-                css_class += " btn_primary";
+                link_elmt.addClass("btn_primary");
             }
         }
-        elmt_link.attribute("class", css_class);
-        elmt_link.addText(this.getLabel());
-        return elmt_link;
+        link_elmt.text(this.getLabel());
+        return link_elmt;
     }
 };
 x.page.Link.render.doc = {
@@ -81,20 +78,16 @@ x.page.Link.render.doc = {
     returns: "nothing"
 };
 
-x.page.Link.renderNavOption = function (ul_elem, render_opts, this_val) {
-    var elmt_link;
+x.page.Link.renderNavOption = function (ul_elmt, render_opts, this_val) {
+    var anchor_elmt;
     x.log.functionStart("renderNavOption", this, arguments);
     if (this.nav_options !== false) {
-        elmt_link = ul_elem.addChild("li").addChild("a");
+        anchor_elmt = ul_elmt.makeElement("li").makeAnchor(this.getLabel(), this.getURL(this_val));
         if (this.open_in_modal || (this.page_to && x.page.Pages[this.page_to].open_in_modal)) {
-            elmt_link.attribute("class", "css_open_in_modal");
-            elmt_link.attribute("href", this.getURL(this_val));
-        } else {
-            elmt_link.attribute("href", this.getURL(this_val));
+            anchor_elmt.attr("class", "css_open_in_modal");
         }
-        elmt_link.addText(this.getLabel());
     }
-    return elmt_link;
+    return anchor_elmt;
 };
 
 x.page.Link.getJSON = function () {

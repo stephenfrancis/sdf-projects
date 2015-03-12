@@ -77,11 +77,11 @@ x.data.Option.validate = function () {
 };
 
 
-x.data.Option.renderEditable = function (div, render_opts, inside_table) {
-    var elem,
-        tb_input;
+x.data.Option.renderEditable = function (div_elmt, render_opts, inside_table) {
+    var out_elmt,
+        css_class;
     x.log.functionStart("renderEditable", this, arguments);
-    tb_input = this.getEditableSizeCSSClass(render_opts);
+    css_class = this.getEditableSizeCSSClass(render_opts);
     try {
         this.getLoV();
     } catch (e) {
@@ -89,12 +89,12 @@ x.data.Option.renderEditable = function (div, render_opts, inside_table) {
     }
     if (this.lov) {
         if (this.render_radio) {
-            elem = this.lov.renderRadio(div, render_opts, this.val, tb_input, this.mandatory);
+            out_elmt = this.lov.renderRadio(div_elmt, render_opts, this.val, css_class, this.mandatory);
         } else {
-            elem = this.lov.render     (div, render_opts, this.val, tb_input, this.mandatory);
+            out_elmt = this.lov.render     (div_elmt, render_opts, this.val, css_class, this.mandatory);
         }
     }
-    return elem;
+    return out_elmt;
 };
 
 

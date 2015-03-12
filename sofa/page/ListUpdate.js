@@ -91,17 +91,14 @@ x.page.ListUpdate.addDeleteColumn = function () {
 
     x.log.functionStart("addDeleteColumn", this, arguments);
     col = this.columns.add({ id: "_delete", label: " ", css_class: "css_col_control" });
-    col.renderCell = function (row_elem, render_opts, i, row) {
-        var cell_elem;
+    col.renderCell = function (row_elmt, render_opts, i, row) {
+        var cell_elmt;
         x.log.functionStart("renderCell", this, arguments);
         if (this.visible) {
-            cell_elem = row_elem.addChild("td", null, this.css_class);
-            cell_elem.addChild("a", "list_delete_" + row.control_prefix, "css_cmd css_uni_icon_lrg")
-                .attribute("title", "Remove this row")
-                .addText(that.delete_row_icon, true);
-//                .addChild("img", "list_delete_" + section.id + "_" + section.rows.indexOf(row_obj), "css_cmd")
-//                .attribute("alt", "Remove this row")
-//                .attribute("src", "../rsl_shared/style/Axialis/Png/16x16/Minus.png");
+            cell_elmt = row_elmt.makeElement("td", this.css_class);
+            cell_elmt.makeElement("a", "css_cmd css_uni_icon_lrg", "list_delete_" + row.control_prefix)
+                .attr("title", "Remove this row")
+                .html(that.delete_row_icon);
         }
     };
 };
@@ -192,11 +189,6 @@ x.page.ListUpdate.addNewRowInternal = function (field_id, field_val) {
     }
     this.addRow(row);
     return row;
-};
-x.page.ListUpdate.addNewRowInternal.doc = {
-    purpose: "",
-    args   : "",
-    returns: ""
 };
 
 
@@ -344,25 +336,21 @@ x.page.ListUpdate.renderBody.doc = {
 };
 
 
-x.page.ListUpdate.renderRowAdder = function (foot_elem, render_opts) {
-    var ctrl_elem;
+x.page.ListUpdate.renderRowAdder = function (foot_elmt, render_opts) {
+    var ctrl_elmt;
     x.log.functionStart("renderRowAdder", this, arguments);
     if (this.allow_add_rows) {
-        ctrl_elem = foot_elem.addChild("span", null, "css_list_add");
+        ctrl_elmt = foot_elmt.makeElement("span", "css_list_add");
         if (this.add_row_field) {
-            ctrl_elem.addText("Add new row:");
-            this.add_row_field_obj.render(ctrl_elem, render_opts);
+            ctrl_elmt.text("Add new row:");
+            this.add_row_field_obj.render(ctrl_elmt, render_opts);
         } else {
-            ctrl_elem.addChild("a", "list_add_" + this.id, "css_cmd css_uni_icon_lrg")
-                .attribute("title", "Add another row")
-                .addText(this.add_row_icon, true);
-//                .addChild("img", "list_add_" + this.id, "css_cmd")
-//                .attribute("alt", "Add another row")
-//                .attribute("src", "../rsl_shared/style/Axialis/Png/16x16/Plus.png");
+            ctrl_elmt.makeElement("a", "css_cmd css_uni_icon_lrg", "list_add_" + this.id)
+                .attr("title", "Add another row")
+                .html(this.add_row_icon);
         }
-//        ctrl_elem.addText(" ");
     }
-    return ctrl_elem;
+    return ctrl_elmt;
 };
 x.page.ListUpdate.renderRowAdder.doc = {
     purpose: "",

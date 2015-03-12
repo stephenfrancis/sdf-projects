@@ -12,7 +12,7 @@ x.page.addClone(x.base.Base, {
     }
 });
 
-x.page.Button.render = function (element, render_opts) {
+x.page.Button.render = function (parent_elmt, render_opts) {
     var elmt_button,
         css_class;
     x.log.functionStart("render", this, arguments);
@@ -21,12 +21,12 @@ x.page.Button.render = function (element, render_opts) {
         if (this.main_button) {
             css_class += " btn_primary css_button_main";
         }
-        elmt_button = element.addChild("button", this.id, css_class);
+        button_elmt = parent_elmt.makeElement("button", css_class, this.id);
         if (this.target) {
-            elmt_button.attribute("target", this.target);
+            button_elmt.attr("target", this.target);
         }
-        elmt_button.addText(this.label);
-        return elmt_button;
+        button_elmt.text(this.label);
+        return button_elmt;
     }
 };
 x.page.Button.render.doc = {

@@ -53,19 +53,11 @@ x.data.Boolean.validate = function () {
     }
 };
 
-x.data.Boolean.renderEditable = function (div, render_opts, inside_table) {
-    var input,
-        input2;
+x.data.Boolean.renderEditable = function (parent_elmt, render_opts, inside_table) {
+    var input_elmt;
     x.log.functionStart("renderEditable", this, arguments);
-    input = div.addChild("input");
-    input.attribute("type" , "checkbox");
-    input.attribute("value", "Y");            // for Number, Date and Datetime
-    if (this.get() === "Y") {
-        input.attribute("checked", "checked");
-    }
-    input2 = div.addChild("input");
-    input2.attribute("type", "hidden");
-    return input;
+    input_elmt = parent_elmt.makeCheckbox(this.getControl(), (this.get() === "Y"));
+    return input_elmt;
 };
 
 x.data.Boolean.generateTestValue = function (session) {

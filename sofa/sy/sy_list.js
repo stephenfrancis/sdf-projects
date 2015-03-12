@@ -13,6 +13,7 @@ x.sy.addEntity({
     primary_key     : "id",
 //    icon            : "style/Axialis/Png/24x24/Table.png",
     plural_label    : "Lists of Values",
+    url_prefix      : "sy_list:"
 //    pack_level      : 0,
 //    pack_condition  : "area='{module}'"
 });
@@ -35,8 +36,8 @@ x.sy.List.pages.context.sections.addAll([
     { id: "main"    , type: "Display" }
 ]);
 x.sy.List.pages.context.links.addAll([
-    { id: "update", page_to: "sy.List.update", page_key: "{page_key}" }, 
-    { id: "delete", page_to: "sy.List.delete", page_key: "{page_key}" }
+    { id: "update", page_to: "x.sy.List.update", page_key: "{page_key}" }, 
+    { id: "delete", page_to: "x.sy.List.delete", page_key: "{page_key}" }
 ]);
 // End of Page sy_list_context
 
@@ -48,8 +49,8 @@ x.sy.List.addPage({
     short_title     : "Create"
 });
 x.sy.List.pages.create.sections.addAll([
-    { id: "main" , type: "Create"    , entity_id: "sy.List" },
-    { id: "items", type: "ListUpdate", entity_id: "sy.ListItem" }
+    { id: "main" , type: "Create"    , entity_id: "x.sy.List" },
+    { id: "items", type: "ListUpdate", entity_id: "x.sy.ListItem" }
 ]);
 // End of Page sy_list_create
 
@@ -63,7 +64,7 @@ x.sy.List.addPage({
     security        : { all: false, sysmgr: true }
 });
 x.sy.List.pages.deleet.sections.addAll([
-    { id: "main", type: "Delete", entity_id: "sy.List" }
+    { id: "main", type: "Delete", entity_id: "x.sy.List" }
 ]);
 // End of Page sy_list_delete
 
@@ -74,13 +75,13 @@ x.sy.List.addPage({
     requires_key    : true
 });
 x.sy.List.pages.display.sections.addAll([
-    { id: "main"    , type: "Display"      , entity_id: "sy.List" }, 
-    { id: "items"   , type: "ListDisplay"  , entity_id: "sy.ListItem" }, 
+    { id: "main"    , type: "Display"      , entity_id: "x.sy.List" }, 
+//    { id: "items"   , type: "ListDisplay"  , entity_id: "x.sy.ListItem" }, 
 //    { id: "chg_hist", type: "ChangeHistory", entity: "sy_list" }
 ]);
 x.sy.List.pages.display.links.addAll([
-    { id: "update", page_to: "sy.List.update", page_key: "{page_key}" }, 
-    { id: "delete", page_to: "sy.List.delete", page_key: "{page_key}" }
+    { id: "update", page_to: "x.sy.List.update", page_key: "{page_key}" }, 
+    { id: "delete", page_to: "x.sy.List.delete", page_key: "{page_key}" }
 ]);
 // End of Page sy_list_display
 
@@ -94,7 +95,7 @@ x.sy.List.pages.search.sections.addAll([
 //    { id: "main", type: "Search", entity: "sy_list" }
 ]);
 x.sy.List.pages.search.links.addAll([
-    { id: "create", page_to: "sy.List.create" }
+    { id: "create", page_to: "x.sy.List.create" }
 ]);
 // End of Page sy_list_search
 
@@ -107,8 +108,8 @@ x.sy.List.addPage({
     short_title     : "Update"
 });
 x.sy.List.pages.update.sections.addAll([
-    { id: "main" , type: "Update"    , entity_id: "sy.List" },
-    { id: "items", type: "ListUpdate", entity_id: "sy.ListItem" }
+    { id: "main" , type: "Update"    , entity_id: "x.sy.List" },
+//    { id: "items", type: "ListUpdate", entity_id: "x.sy.ListItem" }
 ]);
 // End of Page sy_list_update
 

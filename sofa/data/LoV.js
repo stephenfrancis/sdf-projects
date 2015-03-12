@@ -30,112 +30,62 @@ x.data.LoV.getItem = function (id) {
     return item;
 };
 
-x.data.LoV.render = function (div, render_opts, val, control, css_class, mandatory) {
+x.data.LoV.render = function (parent_elmt, render_opts, val, control, css_class, mandatory) {
     var i,
         item,
-        select,
-        option;
+        select_elmt;
+
     x.log.functionStart("render", this, arguments);
-    select = div.addChild("select", control, css_class);
-    select.attribute("name", control);
+    select_elmt = parent_elmt.makeElement("select", css_class, control);
     if (!mandatory) {
-        option = select.addChild("option");
-        option.attribute("value", "");
-        if (!val) {
-            option.attribute("selected", "selected");
-        }
-        option.addText(this.blank_label);
+        select_elmt.makeOption("", this. blank_label, !val);
     } else if (!val || !this.getItem(val) || !this.getItem(val).active) {
-        option = select.addChild("option");
-        option.attribute("value", "");
-        option.attribute("selected", "selected");
-        option.addText(this.choose_label);
+        select_elmt.makeOption("", this.choose_label, true);
     }
     for (i = 0; i < this.length(); i += 1) {
         item = this.getItem(i);
         if (item.active) {
-            option = select.addChild("option");
-            option.attribute("value", item.id);
-            if (item.id === val) {
-                option.attribute("selected", "selected");
-            }
-            option.addText(item.label);
+            select_elmt.makeOption(item.id, item.label, (item.id === val));
         }
     }
-    return select;
+    return select_elmt;
 };
 
-x.data.LoV.renderRadio = function (div, render_opts, val, control, css_class, mandatory) {
-    var inner,
-        span,
+x.data.LoV.renderRadio = function (parent_elmt, render_opts, val, control, css_class, mandatory) {
+    var span_elmt,
         i,
-        item,
-        radio,
-        label;
+        item;
+
     x.log.functionStart("renderRadio", this, arguments);
-    inner = div.addChild("span", control, css_class);
-//    div.attribute("id", control, css_class);
+    span_elmt = parent_elmt.makeElement("span", css_class, control);
     if (!mandatory) {
-        span = inner.addChild("span", null, "css_attr_item");
-        radio = span.addChild("input", control + "__");
-        radio.attribute("name" , control);
-        radio.attribute("type" , "radio");
-        radio.attribute("value", "");
-        if (!val) {
-            radio.attribute("selected", "selected");
-        }
-        label = span.addChild("label");
-        label.attribute("for", control + "__");
-        label.addText(this.blank_label || "[blank]");
+        span_elmt.makeRadioLabelSpan(control, "__", this.blank_label || "[blank]", !val);
     }
     for (i = 0; i < this.length(); i += 1) {
         item = this.getItem(i);
         if (item.active) {
-            span = inner.addChild("span", null, "css_attr_item");
-            radio = span.addChild("input", control + "_" + item.id);
-            radio.attribute("name" , control);
-            radio.attribute("type" , "radio");
-            radio.attribute("value", item.id);
-            if (item.id === val) {
-                radio.attribute("checked", "checked");
-            }
-            label = span.addChild("label");
-            label.attribute("for", control + "_" + item.id);
-            label.addText(item.label);
+            span_elmt.makeRadioLabelSpan(control, item.id, item.label, (item.id === val));
         }
     }
 };
 
-x.data.LoV.renderMulti = function (div, render_opts, control, pieces, css_class) {
-    var inner,
+x.data.LoV.renderMulti = function (parent_elmt, render_opts, control, pieces, css_class) {
+    var   span_elmt,
+        hidden_elmt,
         i,
-        item,
-        span,
-        checkbox,
-        label;
+        item;
+
     x.log.functionStart("renderMulti", this, arguments);
     if (!this.loaded) {
         this.loadDocument();
     }
-    inner = div.addChild("span", control, css_class);
-    checkbox = inner.addChild("input");
-    checkbox.attribute("name" , control);
-    checkbox.attribute("type" , "hidden");
-//    div.attribute("id", control, css_class);
+      span_elmt = parent_elmt.makeElement("span", css_class, control);
+    hidden_elmt = span_elmt.makeInput("hidden");
+    hidden_elmt.attr("name" , control);
     for (i = 0; i < this.length(); i += 1) {
         item = this.getItem(i);
         if (item.active) {
-            span = inner.addChild("span", null, "css_attr_item");
-            checkbox = span.addChild("input", control + "." + item.id);
-            checkbox.attribute("name" , control);
-            checkbox.attribute("type" , "checkbox");
-            checkbox.attribute("value", item.id);
-            if (pieces.indexOf(item.id) > -1) {
-                checkbox.attribute("checked", "checked");
-            }
-            label = span.addChild("label");
-            label.attribute("for", control + "." + item.id);
-            label.addText(item.label);
+            span_elmt.makeCheckboxLabelSpan(control, item.id, item.label, (pieces.indexOf(item.id) > -1));
         }
     }
 };
@@ -145,7 +95,7 @@ x.data.LoV.queryMerge = function (query, lov_column, callback) {
         col_val;
     x.log.functionStart("queryMerge", this, arguments);
     count = {};
-    this.each(function(item) {
+    this.each(function (item) {
         count[item.id] = 0;
     });
     while (query.next()) {

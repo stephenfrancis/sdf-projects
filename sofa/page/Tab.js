@@ -12,10 +12,12 @@ x.page.addClone(x.base.Base, {
     }
 });
 
-x.page.Tab.render = function (element, render_opts) {
+x.page.Tab.render = function (parent_elmt, render_opts) {
     x.log.functionStart("render", this, arguments);
     if (this.visible) {
-        return element.addChild("div", this.id, null).addText(this.label);
+        return parent_elmt.makeElement("li", (this.id === this.owner.page.page_tab ? "active" : ""), this.id)
+            .makeElement("a")
+            .text(this.label);
     }
 };
 x.page.Tab.render.doc = {

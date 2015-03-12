@@ -2,15 +2,15 @@
 "use strict";
 
 
-x.data.Text.render = function (element, render_opts) {
-    var div;
+x.data.Text.render = function (parent_elmt, render_opts) {
+    var div_elmt;
     x.log.functionStart("render", this, arguments);
-    div = element.addChild("div", null, this.getCSSClass());
+    div_elmt = parent_elmt.makeElement("div", this.getCSSClass());
     if (!this.validated) {
         this.validate();
     }
-    this.renderInner(div, render_opts);
-    return div;
+    this.renderInner(div_elmt, render_opts);
+    return div_elmt;
 };
 x.data.Text.render.doc = {
     purpose: "To add the necessary HTML to the element XmlStream to render this field according to its properties - if it is \
@@ -21,18 +21,18 @@ renderUneditable()",
 };
 
 
-x.data.Text.renderControlGroup = function (element, render_opts) {
-    var div,
-        inner;
+x.data.Text.renderControlGroup = function (parent_elmt, render_opts) {
+    var   div_elmt,
+        inner_elmt;
     x.log.functionStart("renderControlGroup", this, arguments);
-    div = element.addChild("div", null, "control-group" + (this.isValid() ? "" : " error"));
-    this.renderLabel(div, render_opts);
+    div_elmt = parent_elmt.makeElement("div", "control-group" + (this.isValid() ? "" : " error"));
+    this.renderLabel(div_elmt, render_opts);
     if (!this.validated) {
         this.validate();
     }
-    inner = div.addChild("div", null, "controls " + this.getCSSClass());
-    this.renderInner(inner, render_opts);
-    return div;
+    inner_elmt = div_elmt.makeElement("div", "controls " + this.getCSSClass());
+    this.renderInner(inner_elmt, render_opts);
+    return div_elmt;
 };
 x.data.Text.renderControlGroup.doc = {
     purpose: "To render this field as a Twitter-Bootstrap Control Group",
@@ -41,26 +41,27 @@ x.data.Text.renderControlGroup.doc = {
 };
 
 
-x.data.Text.renderFormFluid = function (element, render_opts) {
-    var div,
-        label_elem;
+x.data.Text.renderFormFluid = function (parent_elmt, render_opts) {
+    var   div_elmt,
+        label_elmt;
     x.log.functionStart("renderFormFluid", this, arguments);
-    div = element.addChild("div", null, "span" + this.tb_span + " " + this.getCSSClass());
+    div_elmt = parent_elmt.makeElement("div", "span" + this.tb_span + " " + this.getCSSClass());
     if (this.description) {
-        label_elem = div.addChild("a", null, "css_label");
-        label_elem.attribute("rel", "tooltip");
-        label_elem.attribute("title", this.description);
-        label_elem.addText(this.label);
+        label_elmt = div_elmt.makeElement("a", "css_label");
+        label_elmt.attr("rel", "tooltip");
+        label_elmt.attr("title", this.description);
+        label_elmt.text(this.label);
     } else {
-        div.addChild("span", null, "css_label", this.label);
+        div_elmt.makeElement("span", "css_label")
+            .text(this.label);
     }
     if (!this.validated) {
         this.validate();
     }
 //    this.renderUneditable(div, render_opts);
-    div = div.addChild("div", null, "css_disp");
-    this.renderInner(div, render_opts);
-    return div;
+    div_elmt = div_elmt.makeElement("div", "css_disp");
+    this.renderInner(div_elmt, render_opts);
+    return div_elmt;
 };
 x.data.Text.renderFormFluid.doc = {
     purpose: "To render this field in a form",
@@ -69,17 +70,17 @@ x.data.Text.renderFormFluid.doc = {
 };
 
 
-x.data.Text.renderCell = function (row_elem, render_opts) {
-    var cell_elem,
-        div;
+x.data.Text.renderCell = function (row_elmt, render_opts) {
+    var cell_elmt,
+        div_elmt;
     x.log.functionStart("renderCell", this, arguments);
-    cell_elem = row_elem.addChild("td", null, this.getCellCSSClass());
-    div = cell_elem.addChild("div", null, this.getCSSClass());
+    cell_elmt =  row_elmt.makeElement("td" , this.getCellCSSClass());
+     div_elmt = cell_elmt.makeElement("div", this.getCSSClass());
     if (!this.validated) {
         this.validate();
     }
-    this.renderInner(div, render_opts);
-    return cell_elem;
+    this.renderInner(div_elmt, render_opts);
+    return cell_elmt;
 };
 x.data.Text.renderCell.doc = {
     purpose: "To render a <td> element and its content, by calling render(), to be a list cell",
@@ -88,21 +89,17 @@ x.data.Text.renderCell.doc = {
 };
 
 
-x.data.Text.renderLabel = function (div, render_opts) {
-    var elmt,
-        elmt_a;
+x.data.Text.renderLabel = function (div_elmt, render_opts) {
+    var label_elmt;
     x.log.functionStart("renderLabel", this, arguments);
-    elmt = div.addChild("label", null, "control-label");
-//    elmt.attribute("for", this.getControl());
+    label_elmt = div_elmt.makeElement("label", "control-label");
+    label_elmt.text(this.label);
     if (this.description) {
-        elmt_a = elmt.addChild("a");
-        elmt_a.attribute("rel"  , "tooltip");
-        elmt_a.attribute("title", this.description);
-        elmt_a.attribute("class", "css_uni_icon");
-        elmt_a.addText(this.hover_text_icon, true);
+        label_elmt.makeUniIcon(this.hover_text_icon)
+            .attr("rel"  , "tooltip")
+            .attr("title", this.description);
     }
-    elmt.addText(this.label);
-    return elmt;
+    return label_elmt;
 };
 x.data.Text.renderLabel.doc = {
     purpose: "To render the label of this field, with a 'for' attribute to the control, and a tooltip if 'description' is given",
@@ -112,38 +109,37 @@ x.data.Text.renderLabel.doc = {
 
 
 
-x.data.Text.renderInner = function (div, render_opts) {
-    if (div) {
-        this.inner_div = div;
+x.data.Text.renderInner = function (div_elmt, render_opts) {
+    if (div_elmt) {
+        this.inner_div_elmt = div_elmt;
     }
-    if (!this.inner_div) {
+    if (!this.inner_div_elmt) {
         throw new Error("no inner_div");
     }
     if (!render_opts) {
         render_opts = {};
     }
-    this.inner_div.empty();
+    this.inner_div_elmt.empty();
     if (this.isEditable() && !render_opts.uneditable) {
-        this.renderEditable(this.inner_div, render_opts);
+        this.renderEditable(this.inner_div_elmt, render_opts);
         if (!this.isValid()) {
-            this.renderErrors(this.inner_div, render_opts);
+            this.renderErrors(this.inner_div_elmt, render_opts);
         }
     } else {
-        this.renderUneditable(this.inner_div, render_opts);
+        this.renderUneditable(this.inner_div_elmt, render_opts);
     }
 };
 
 
-x.data.Text.renderEditable = function (div, render_opts, inside_table) {
-    var str;
+x.data.Text.renderEditable = function (div_elmt, render_opts, inside_table) {
+    var input_elmt;
     x.log.functionStart("renderEditable", this, arguments);
-    str = "<input type='" + this.input_type + "' class='" + this.getEditableSizeCSSClass(render_opts) +
-        "' value='" + this.getUpdateText() + "' id='" + this.getControl();
+    input_elmt = div_elmt.makeInput(this.input_type, this.getEditableSizeCSSClass(render_opts),
+        this.getControl(), this.getUpdateText());
     if (this.placeholder || this.helper_text) {
-        str += "' placeholder='" + (this.placeholder || this.helper_text);
+        input_elmt.attr("placeholder", (this.placeholder || this.helper_text));
     }
-    str += "' />";
-    div.addHTML(str);
+    return input_elmt;
 };
 x.data.Text.renderEditable.doc = {
     purpose: "To render an editable control for this field",
@@ -170,7 +166,7 @@ x.data.Text.getEditableSizeCSSClass.doc = {
  * - decoration icon instead of text (with or without link)
  */
 
-x.data.Text.renderUneditable = function (elem, render_opts, inside_table) {
+x.data.Text.renderUneditable = function (elmt, render_opts, inside_table) {
     var url,
         style,
         text,
@@ -181,27 +177,27 @@ x.data.Text.renderUneditable = function (elem, render_opts, inside_table) {
         this.validate();
     }
     if (this.getText() !== this.val) {
-        elem.attribute("val", this.val);
+        elmt.attr("val", this.val);
     }
     style = this.getUneditableCSSStyle();
     if (style) {
-        elem.attribute("style", style);
+        elmt.attr("style", style);
     }
     url  = this.getURL();
     text = this.getText();
     if (render_opts.dynamic_page !== false) {
-        nav_options = this.renderNavOptions(elem, render_opts);
+        nav_options = this.renderNavOptions(elmt, render_opts);
     }
     if (url && !nav_options && render_opts.show_links !== false) {
-        elem = elem.addChild("a");
-        elem.attribute("href", url);
+        elmt = elmt.makeElement("a");
+        elmt.attr("href", url);
         if (this.url_target) {
-            elem.attribute("target", this.url_target);
+            elmt.attr("target", this.url_target);
         }
         if (this.unicode_icon) {
-            elem.addChild("span", null, this.unicode_icon_class).addText(this.unicode_icon, true);
+            elmt.makeUniIcon(this.unicode_icon);
         } else if (this.button_class) {            // Render URL Field as button
-            elem.attribute("class", this.button_class);
+            elmt.addClass(this.button_class);
         }
         if (this.url_link_text && !this.isBlank()) {
             text = this.url_link_text;
@@ -209,14 +205,9 @@ x.data.Text.renderUneditable = function (elem, render_opts, inside_table) {
     }
     if (text) {
         if (this.decoration_icon) {
-            elem.addText(this.decoration_icon, true);
+            elmt.html(this.decoration_icon);
         }
-//        if (this.icon) {
-//            elem.addChild("img")
-//                .attribute("alt", this.icon_alt_text || text)
-//                .attribute("src", this.icon);
-//        }
-        elem.addText(text);
+        elmt.text(text);
     }
 };
 x.data.Text.renderUneditable.doc = {
@@ -226,7 +217,7 @@ x.data.Text.renderUneditable.doc = {
 };
 
 
-x.data.Text.renderNavOptions = function (parent_elem, render_opts, inside_table) {
+x.data.Text.renderNavOptions = function (parent_elmt, render_opts, inside_table) {
     x.log.functionStart("renderNavOptions", this, arguments);
 };
 x.data.Text.renderNavOptions.doc = {
@@ -236,18 +227,18 @@ x.data.Text.renderNavOptions.doc = {
 };
 
 
-x.data.Text.renderErrors = function (span, render_opts, inside_table) {
-    var elem,
+x.data.Text.renderErrors = function (parent_elmt, render_opts, inside_table) {
+    var span_elmt,
         text = "",
         delim = "";
     x.log.functionStart("renderErrors", this, arguments);
-    elem = span.addChild("span", null, "help-inline");
+    span_elmt = parent_elmt.makeElement("span", "help-inline");
     this.messages.forOwn(function (i, msg) {
         text += delim + msg.text;
         delim = ", ";
     });
     x.log.debug(this, "Error text for field " + this.toString() + " = " + text);
-    elem.addText(text);
+    span_elmt.text(text);
     return text;
 };
 x.data.Text.renderErrors.doc = {
@@ -316,24 +307,14 @@ x.data.Text.getUneditableCSSStyle.doc = {
 
 
 // Used in Reference and File
-x.data.Text.renderDropdownDiv = function (parent_elem, tooltip) {
-    var div_elem,
-        a_elem,
-        ul_elem;
+x.data.Text.renderDropdownDiv = function (parent_elmt, tooltip) {
+    var div_elmt,
+         ul_elmt;
     x.log.functionStart("renderDropdownDiv", this, arguments);
-    div_elem = parent_elem.addChild("div", null, "dropdown");
-    a_elem = div_elem.addChild("a", null, "dropdown-toggle css_uni_icon");
-    a_elem.attribute("role", "button");
-    a_elem.attribute("data-toggle", "dropdown");
-    a_elem.attribute("data-target", "#");
-    if (tooltip) {
-        a_elem.attribute("title", tooltip);
-    }
-    a_elem.addText(this.nav_dropdown_icon, true);
-    ul_elem = div_elem.addChild("ul", null, "dropdown-menu")
-        .attribute("role", "menu")
-        .attribute("aria-labelledby", control);
-    return ul_elem;
+    div_elmt = parent_elmt.makeElement("div", "dropdown");
+    div_elmt.makeDropdownIcon(this.nav_dropdown_icon, tooltip);
+    ul_elmt = div_elmt.makeDropdownUL(control);
+    return ul_elmt;
 };
 
 //To show up in Chrome debugger...

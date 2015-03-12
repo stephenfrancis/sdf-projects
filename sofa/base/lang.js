@@ -2,6 +2,43 @@
 "use strict";
 
 
+Object.prototype.forAll = function (funct) {
+    var prop;
+    for (prop in this) {
+        if (typeof this[prop] !== "function") {
+            funct(prop, this[prop]);
+        }
+    }
+};
+
+Object.prototype.forOwn = function (funct) {
+    var prop;
+    for (prop in this) {
+        if (this.hasOwnProperty(prop) && typeof this[prop] !== "function") {
+            funct(prop, this[prop]);
+        }
+    }
+};
+
+Object.prototype.view = function (depth, incl_inherits) {
+    var out   = "{",
+        delim = " ";
+
+    depth = depth || 0;
+    if (depth > -1) {
+        this[incl_inherits ? "forAll" : "forOwn"](function (prop_id, prop_val) {
+            out += delim + prop_id + ": " + Object.viewProp(prop_val, depth, incl_inherits);
+            delim = ", ";
+        });
+        return out + delim.substr(1) + "}";
+    }
+    return "{...}";
+};
+
+Object.isAnyObject = function (obj) {
+    return !!(typeof obj === "string" || typeof obj === "number" || typeof obj === "boolean" || obj);
+};
+
 
 String.prototype.repeat = function (num) {
     return new Array(num + 1).join(this);
@@ -63,7 +100,7 @@ Array.prototype.copy = function () {
     return new_arr;
 };
 
-/*
+
 Object.viewProp = function (prop_val, depth, incl_inherits) {
     return Object.isAnyObject(prop_val) ? prop_val.view(depth - 1, incl_inherits) : typeof prop_val;
 };
@@ -93,7 +130,7 @@ Number.prototype.view = function (depth) {
 String.prototype.view = function (depth) {
     return "\"" + this.toString() + "\"";
 };
-*/
+
 
 //To show up in Chrome debugger...
 //@ sourceURL=base/lang.js

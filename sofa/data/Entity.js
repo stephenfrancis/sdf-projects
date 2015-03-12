@@ -1,15 +1,16 @@
-/*global x, java */
+/*global x, java, Promise */
 "use strict";
 
 
 x.data.addClone(x.data.FieldSet, {
     id                      : "Entity",
     database_url            : "http://other_apps:5984/stevief/",
+    promise_cache           : {}
 //    events                  : x.data.EventStack.clone({ id: "Record.events", events: [
 //                                  "initCreate", "initUpdate", "load", "reload", "update", "afterTransChange", "presave" ] })
 });
 
-// status: 'N'ew, 'L'oading, 'U'nmodified, 'M'odified, 'S'aving;    N > S > U,   L > U,   U > M > S > U,   S > E,   L > E
+// status: 'N'ew, 'B'efore Load, 'L'oading, 'U'nmodified, 'M'odified, 'S'aving;    N > S > U,   B > L > U,   U > M > S > U,   S > E,   L > E
 
 x.data.Entity.clone = function (spec) {
     var new_obj;
@@ -20,8 +21,8 @@ x.data.Entity.clone = function (spec) {
     new_obj = x.data.FieldSet.clone.call(this, spec);
     if (new_obj.instance) {
         if (this.primary_key) {
-            new_obj.primary_key = new_obj.getField(this.primary_key);
-            if (!new_obj.primary_key) {
+            new_obj.primary_key_field = new_obj.getField(this.primary_key);
+            if (!new_obj.primary_key_field) {
                 throw new Error("configuration error: invalid primary_key: " + new_obj.id);
             }
         }
@@ -50,16 +51,38 @@ x.data.Entity.addPage = function (spec) {
     return page;
 };
 
-x.data.Entity.getDocument = function (key) {
+
+// if the document is loaded from the server then
+//      doc_id is either a uuid (if primary_key.auto_generate), or else {module}.{entity}:{primary key}
+// otherwise, it is null
+x.data.Entity.getDocId = function (key) {
+    var doc_id = "";
+    if (this.primary_key_field.auto_generate) {
+        if (this.primary_key_field.isBlank()) {
+            this.primary_key_field.autoGenerate();
+        }
+    } else {
+        doc_id = this.url_prefix || (this.path() + ":");
+    }
+    doc_id += (key || this.primary_key_field.get());
+    return doc_id;
+};
+
+x.data.Entity.getDocPromise = function (key) {
     var doc,
-        doc_id,
         promise;
-    x.log.functionStart("getDocument", this, arguments);
+    x.log.functionStart("getDocPromise", this, arguments);
     key = key || "";
-    doc_id = key && ((!this.primary_key.auto_generate ? this.id + ":" : "") + key);
+    if (key) {
+        promise = this.promise_cache[this.path() + ":" + key];
+        if (promise) {
+            return promise;
+        }
+    }
+//    doc_id = key && ((!this.primary_key.auto_generate ? this.id + ":" : "") + key);
     doc = this.clone({
         id: key || this.id,
-        doc_id: doc_id,
+        status: key ? 'B' : 'N',            // 'B'efore Load or 'N'ew
         instance: true,
         modifiable: true
     });
@@ -67,8 +90,8 @@ x.data.Entity.getDocument = function (key) {
         promise = new Promise(function (resolve, reject) {
             doc.load(resolve, reject);
         });
+        this.promise_cache[this.path() + ":" + key] = promise;
     } else {
-        doc.status = 'N';    // New
         promise = new Promise(doc);
     }
     return promise;
@@ -79,7 +102,7 @@ x.data.Entity.isWaiting = function () {
 };
 
 
-x.data.Entity.addChild = function (entity) {
+x.data.Entity.addChild = function (entity_id) {
     var new_row;
     x.log.functionStart("addChild", this, arguments);
 //    if (!this.parent.children || !this.parent.children[entity_id]) {
@@ -89,7 +112,7 @@ x.data.Entity.addChild = function (entity) {
     if (!this.child_rows[entity_id]) {
         this.child_rows[entity_id] = [];
     }
-    new_row = x.entities[entity_id].clone({
+    new_row = x.base.Module.getEntity(entity_id).clone({
         id: this.id + "/" + entity_id + "[" + this.child_rows[entity_id].length + "]",
         instance: true, modifiable: true, owner: this
     });
@@ -108,15 +131,19 @@ x.data.Entity.eachChildRow = function (funct, specific_entity_id) {
     });
 };
 
+x.data.Entity.getLoadURL = function (key) {
+    return this.database_url + encodeURIComponent(this.getDocId(key));
+};
+
 x.data.Entity.load = function (resolve, reject) {
     var that = this;
     x.log.functionStart("load", this, arguments);
-    if (this.status) {
+    if (this.status !== 'B') {
         reject("invalid document status: " + this.status);
     }
-    x.log.debug(this, "load() doc_id: " + this.doc_id);
+    x.log.debug(this, "load() doc_id: " + this.getDocId());
     this.status = 'L';    // Loading
-    x.io.http({ url: this.database_url + encodeURIComponent(this.doc_id), cache: false, async: false, type: "GET",
+    x.io.http({ url: this.getLoadURL(this.id), cache: false, async: false, type: "GET",
         success: function (data_back) {
             x.log.debug(that, "calling load.success()");
             if (that.status !== 'L') {
@@ -124,7 +151,7 @@ x.data.Entity.load = function (resolve, reject) {
             }
             that.populate(data_back);
 //            that.primary_key.setInitial(that.doc_id);
-            that.primary_key.fixed_key = true;
+            that.primary_key_field.fixed_key = true;
             that.rev    = data_back._rev;
             that.status = 'U';
             resolve(that);
@@ -132,15 +159,22 @@ x.data.Entity.load = function (resolve, reject) {
         error: function (code, msg) {
             x.log.debug(that, "calling load.error()");
             that.status = 'E';
-            that.error  = "[" + code + "] " + msg;
+            that.error = code.status;
             reject(that.error);
         }
     });
 };
 
+x.data.Entity.getSaveURL = function () {
+    var url = this.database_url + encodeURIComponent(this.doc_id);
+    if (this.rev) {
+        url += "?rev=" + this.rev;
+    }
+    return url;
+};
+
 x.data.Entity.save = function (resolve, reject) {
-    var that = this,
-        url;
+    var that = this;
     x.log.functionStart("save", this, arguments);
     if (this.status !== 'N' && this.status !== 'M') {
         reject("invalid document status - " + this.status);
@@ -148,21 +182,9 @@ x.data.Entity.save = function (resolve, reject) {
     if (!this.isValid()) {
         reject("document is not valid");
     }
-    if (!this.doc_id) {
-        if (!this.primary_key.auto_generate) {
-            if (this.primary_key.isBlank()) {
-                reject("primary key not populated");
-            }
-            this.doc_id = this.id + ":" + this.primary_key.get();
-        }
-    }
-    url = this.database_url + encodeURIComponent(this.doc_id);
-    if (this.rev) {
-        url += "?rev=" + this.rev;
-    }
     x.log.debug(this, "save() doc_id: " + this.doc_id + ", rev: " + this.rev);
     this.status = 'S';    // Saving
-    x.io.http({ url: url, cache: false, async: false, type: (this.doc_id ? "PUT" : "POST"), data: JSON.stringify(this.getData()),
+    x.io.http({ url: this.getSaveURL(), cache: false, async: false, type: (this.doc_id ? "PUT" : "POST"), data: JSON.stringify(this.getData()),
         success: function (data_back) {
             x.log.debug(that, "calling save.success()");
             if (that.status !== 'S') {
@@ -197,13 +219,13 @@ x.data.Entity.populate = function (data_back) {
             field.setInitial(data_back[field.id]);
         }
     });
-    if (data_back.child_rows) {
-        data_back.child_rows.forOwn(function (entity_id, row_array) {
-            row_array.forOwn(function (i, row) {
-                that.addChild(entity_id).populate(row);
-            });
-        });
-    }
+    // if (data_back.child_rows) {
+    //     data_back.child_rows.forOwn(function (entity_id, row_array) {
+    //         row_array.forOwn(function (i, row) {
+    //             that.addChild(entity_id).populate(row);
+    //         });
+    //     });
+    // }
 };
 
 x.data.Entity.getData = function () {
@@ -302,16 +324,6 @@ x.data.Entity.setModified = function () {
 };
 
 
-x.data.Entity.update  = function () {
-    var label = this.getLabel();
-    this.events.trigger("update", this);
-};
-
-x.data.Entity.presave = function (outcome_id) {
-    this.presave_called = true;
-    this.events.trigger("presave", this, outcome_id);
-};
-
 
 // This function is NOT defined in an entity unless it actually does something
 // - so the existence of this function indicates whether or not record security is applicable for the entity.
@@ -319,49 +331,50 @@ x.data.Entity.presave = function (outcome_id) {
 //};
 
 
-x.data.Entity.renderLineItem = function (element, render_opts) {
+x.data.Entity.renderLineItem = function (parent_elmt, render_opts) {
     var display_page,
-        anchor;
+        anchor_elmt;
     x.log.functionStart("renderLineItem", this, arguments);
     display_page = this.getDisplayPage();
-    anchor = element.addChild("a");
+    anchor_elmt  = parent_elmt.makeElement("a");
     if (display_page) {
-        anchor.attribute("href", display_page.getSimpleURL(this.getKey()));
+        anchor_elmt.attr("href", display_page.getSimpleURL(this.getKey()));
 //        anchor.addChild("img")
-//            .attribute("alt", display_page.title)
-//            .attribute("src", "/rsl_shared/" + this.icon.replace(/\/24x24\//g, "/16x16/"));
-//        sctn_elem.addText(" ");
+//            .attr("alt", display_page.title)
+//            .attr("src", "/rsl_shared/" + this.icon.replace(/\/24x24\//g, "/16x16/"));
+//        sctn_elmt.text(" ");
     }
-    anchor.addText(this.getLabel("list_item"));
-//    this.getField(this.line_item_field || this.title_field).render(element, render_opts);
-    return anchor;
+    anchor_elmt.text(this.getLabel("list_item"));
+//    this.getField(this.line_item_field || this.title_field).render(parent_elmt, render_opts);
+    return anchor_elmt;
 };
 
-x.data.Entity.renderTile = function (parent_elem, render_opts) {
-    var anchor_elem;
+x.data.Entity.renderTile = function (parent_elmt, render_opts) {
+    var anchor_elmt;
     x.log.functionStart("renderTile", this, arguments);
-    anchor_elem = parent_elem.addChild("a", this.id + "_" + this.getKey(), "btn css_tile");
-    this.addTileURL(anchor_elem, render_opts);
-    this.addTileContent(anchor_elem, render_opts);
+    anchor_elmt = parent_elmt.makeElement("a", "btn css_tile", this.id + "_" + this.getKey());
+    this.addTileURL(anchor_elmt, render_opts);
+    this.addTileContent(anchor_elmt, render_opts);
+    return anchor_elmt;
 };
 
-x.data.Entity.addTileURL = function (anchor_elem, render_opts) {
+x.data.Entity.addTileURL = function (anchor_elmt, render_opts) {
     var display_page;
     x.log.functionStart("addTileURL", this, arguments);
     display_page = this.getDisplayPage();
     if (display_page) {
-        anchor_elem.attribute("href", display_page.getSimpleURL(this.getKey()));
+        anchor_elmt.attr("href", display_page.getSimpleURL(this.getKey()));
     }
 };
 
-x.data.Entity.addTileContent = function (anchor_elem, render_opts) {
+x.data.Entity.addTileContent = function (anchor_elmt, render_opts) {
     x.log.functionStart("addTileContent", this, arguments);
     if (this.icon) {
-        anchor_elem.addChild("img")
-            .attribute("alt", this.title)
-            .attribute("src", "/rsl_shared/" + this.icon);
+        anchor_elmt.makeElement("img")
+            .attr("alt", this.title)
+            .attr("src", "/rsl_shared/" + this.icon);
     }
-    anchor_elem.addText(this.getLabel("tile"));
+    anchor_elmt.text(this.getLabel("tile"));
 };
 
 

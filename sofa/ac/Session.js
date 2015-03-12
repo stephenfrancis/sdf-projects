@@ -41,12 +41,12 @@ x.ac.Session.isUserInRole = function (role) {
     return true;
 };
 
-x.ac.Session.getPage = function (page_id, page_key, ui) {
+x.ac.Session.getPage = function (page_id, page_key, elements) {
     var page;
     x.log.functionStart("getPage", this, arguments);
     page = this.getPageFromCacheAndRemove(page_id, page_key);
     if (!page) {
-        page = this.getNewPage(page_id, page_key, ui);
+        page = this.getNewPage(page_id, page_key, elements);
     }
     this.page_cache.unshift(page);                // add page to beginning of array
     this.clearPageCache(5);
@@ -83,19 +83,24 @@ x.ac.Session.getPageFromCacheAndRemove = function (page_id, page_key) {
     return page;
 };
 
-x.ac.Session.getNewPage = function (page_id, page_key, ui) {
-    var page,
+x.ac.Session.getNewPage = function (page_id, page_key, elements) {
+    var split = page_id.split("."),
+        page,
         exc;
 
     x.log.functionStart("getNewPage", this, arguments);
-    if (!x.pages[page_id]) {
+    if (split.length !== 3) {
+        throw new Error("page_id must be of the form 'module.Entity.page': " + page_id);
+    }
+    page = x[split[0]][split[1]].pages[split[2]];
+    if (!page) {
         throw new Error("page not found: " + page_id);
     }
-    if (!this.allowed(page_id, page_key)) {
-        throw new Error("access denied: " + page_id);
-    }
-    page = x.pages[page_id].clone({ id: page_id, page: page_id, session: this, instance: true, ui: ui });
-    page.page_key = page_key;            // Can be used in setup() since cannot subsequently change
+//    if (!this.allowed(page_id, page_key)) {
+//        throw new Error("access denied: " + page_id);
+//    }
+    page = page.clone({ id: page_id, page_key: page_key, session: this, instance: true, elements: elements });
+    // page_key can be used in setup() since cannot subsequently change
 //        this.checkWorkflowPage(page);
     page.setup();                        // without page being cancelled and reloaded
     return page;

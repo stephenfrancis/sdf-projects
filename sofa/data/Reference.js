@@ -100,181 +100,23 @@ the selection_filter argument applied",
 };
 
 
-x.data.Reference.getRow = function (require_trans) {
+x.data.Reference.getDocPromise = function () {
     var ref_val;
-    x.log.functionStart("getRow", this, arguments);
+    x.log.functionStart("getDocPromise", this, arguments);
     ref_val = this.getRefVal();
     if (ref_val) {
-        if (this.owner.trans && (this.owner.trans.isInCache(this.ref_entity, ref_val) || require_trans !== false)) {
-            return this.owner.trans.getActiveRow(this.ref_entity, ref_val);
-        }
-        return x.entities[this.ref_entity].getRow(ref_val);
-    }
-};
-x.data.Reference.getRow.doc = {
-    purpose: "To obtain a row object corresponding to the record in ref_entity with a key being the value of this field, \
-if it is non-blank, or undefined otherwise; the row object belongs to the transaction linked to the owning fieldset of \
-this field, if it has one, or is otherwise an unmodifiable fieldset",
-    args   : "none",
-    returns: "row object with a key of this field's value, or undefined"
-};
-
-
-x.data.Reference.validate = function () {
-    var item,
-        val;
-    x.log.functionStart("validate", this, arguments);
-    if (!this.ref_entity) {
-        this.messages.add({ type: 'E', text: "no ref_entity property found" });
-        return;
-    }
-    if (!x.entities[this.ref_entity]) {
-        this.messages.add({ type: 'E', text: "ref_entity property value invalid: " + this.ref_entity });
-        return;
-    }
-    x.data.Text.validate.call(this);
-//    if (val && this.lov) {                // Only do special validation if non-blank
-    this.getLoV();                        // Trial alternative, low memory approach of only validating against an LoV if it is already present
-                                        // Entities (e.g. rm_rsrc) that specified a selection_filter caused separate loV object for each instance
-    val = this.getRefVal();
-    if (!this.lov) {
-        this.messages.add({ type: 'E', text: "no lov found" });
-    } else if (val) {                // Only do special validation if non-blank
-        item = this.lov.getItem(val);
-        if (item) {
-            this.text = item.label;
-        } else if (this.owner && this.owner.trans && this.owner.trans.isActive() && this.owner.trans.isInCache(this.ref_entity, val)) {
-            this.text = this.owner.trans.getRow(this.ref_entity, val).getLabel("reference");
-        } else {
-            this.text = "[unknown: " + val + "]";
-            this.messages.add({ type: 'E', text: "invalid reference: " + val });
-            x.log.debug(this, "invalid reference: " + val + " for field " + this);
-        }
-    }
-};
-
-// in case label has changed since previous retrieval...
-/*
-x.data.Reference.getText = function () {
-    var item;
-    x.log.functionStart("getText", this, arguments);
-    x.data.Text.getText.call(this);
-    if (!this.isBlank()) {
-        if (this.owner && this.owner.trans && this.owner.trans.isInCache(this.ref_entity, this.get())) {
-            this.text = this.owner.trans.getRow(this.ref_entity, this.get()).getLabel("dropdown");
-        } else if (this.lov) {
-            item = this.lov.getItem(this.get());
-            if (item) {
-                this.text = item.label;
-            }
-        }
-    }
-    return this.text;
-};
-*/
-
-// Support Linked Pairs
-// link_one_way = true means that the child field is disabled until the parent is chosen (to limit drop-down size)
-x.data.Reference.linkToParent = function (parent_field, link_field, link_one_way) {
-    x.log.functionStart("linkToParent", this, arguments);
-    this.linked_parent = parent_field;
-    this.link_field    = link_field;
-    this.link_one_way  = link_one_way;
-    if (this.link_one_way && this.editable) {
-        this.editable = false;
-        this.editable_once_parent_set = true;
-    }
-    parent_field.linked_child = this;
-    parent_field.css_reload = true;
-    if (!parent_field.isBlank()) {
-        this.parentChanged(parent_field.get());
-    }
-};
-x.data.Reference.linkToParent.doc = {
-    purpose: "To link this field to a parent field",
-    args   : "parent field object, link field string, boolean to force the link to be one-way (i.e. pick parent first, then child)",
-    returns: "nothing"
-};
-
-
-x.data.Reference.afterChange = function (oldVal) {
-    x.log.functionStart("afterChange", this, arguments);
-    if (this.linked_child) {
-        this.linked_child.parentChanged();
-    } else if (this.linked_parent) {
-        this.linked_parent.childChanged();
+        return x.base.Module.getEntity(this.ref_entity).getDocPromise(ref_val);
     }
 };
 
 
-// Called on the CHILD
-x.data.Reference.parentChanged = function () {
-    var new_ref_condition,
-        ref_row,
-        implied_parent_val;
-    x.log.functionStart("parentChanged", this, arguments);
-    if (!this.link_field) {
-        throw new Error("child field in linked pair is missing link_field property");
-    }
-    if (this.link_one_way) {
-        this.editable = this.editable_once_parent_set && !this.linked_parent.isBlank();
-    }
-    new_ref_condition = this.linked_parent.isBlank() ? null : "A." + this.link_field + "=" + x.sql.escape(this.linked_parent.get());
-    if (new_ref_condition !== this.ref_condition) {
-        this.lov = null;
-        this.ref_condition = new_ref_condition;
-        if (!this.linked_parent.isBlank() && !this.isBlank()) {        // This may be called as a result of childChanged(), so the parent may
-            ref_row = this.getRow();                // already be set to the value corresponding to this field's new value
-            implied_parent_val = ref_row.getField(this.link_field).get();
-            x.log.debug(this, "curr parent field val: " + this.linked_parent.get() + ", parent val implied by this (child) field val: " + implied_parent_val);
-            if (implied_parent_val !== this.linked_parent.get()) {
-                this.set("");
-            }
-        }
-        this.getLoV();
-        this.validate();
-    }
-};
-x.data.Reference.parentChanged.doc = {
-    purpose: "Called on the child field when the linked parent's value is changed",
-    args   : "none",
-    returns: "nothing"
-};
 
-
-// Called on the PARENT
-x.data.Reference.childChanged = function () {
-    var ref_row,
-        implied_parent_val;
-    x.log.functionStart("childChanged", this, arguments);
-    if (!this.linked_child) {
-        throw new Error("parent field in linked pair is missing linked_child property");
-    }
-    if (!this.linked_child.link_field) {
-        throw new Error("child field in linked pair is missing link_field property");
-    }
-    if (!this.linked_child.isBlank() && this.isBlank()) {
-        ref_row = this.linked_child.getRow();
-        implied_parent_val = ref_row.getField(this.linked_child.link_field).get();
-        x.log.debug(this, "child field val: " + this.linked_child.get() + ", parent val implied by child field val: " + implied_parent_val);
-        if (implied_parent_val !== this.get()) {
-            this.set(implied_parent_val);
-        }
-    }
-};
-x.data.Reference.childChanged.doc = {
-    purpose: "Called on the parent field when the linked child's value is changed",
-    args   : "none",
-    returns: "nothing"
-};
-
-
-x.data.Reference.renderNavOptions = function (parent_elem, render_opts, primary_row) {
+x.data.Reference.renderNavOptions = function (parent_elmt, render_opts, primary_row) {
     var display_page,
         session,
         that = this,
         this_val,
-        ul_elem,
+        ul_elmt,
         count = 0,
         display_url,
         context_url;
@@ -302,116 +144,84 @@ x.data.Reference.renderNavOptions = function (parent_elem, render_opts, primary_
     function renderDropdown() {
         var add_divider = false;
 
-        ul_elem = that.renderDropdownDiv(parent_elem, "Navigation options for this item");
+        ul_elmt = that.renderDropdownDiv(parent_elmt, "Navigation options for this item");
         if (context_url) {
-            ul_elem.addChild("li").addChild("a")
-//                .attribute("data-toggle", "modal")
-//                .attribute("data-target", "#css_modal")
-                .attribute("class", "css_open_in_modal")
-                .attribute("href" , context_url)
-                .addText("Preview");
+            ul_elmt.makeElement("li").makeAnchor("Preview", context_url, "css_open_in_modal");
             add_divider = true;
         }
         if (display_url) {
-            ul_elem.addChild("li").addChild("a")
-                .attribute("href", display_url)
-                .addText("Display");
+            ul_elmt.makeElement("li").makeAnchor("Display", display_url);
             add_divider = true;
         }
         if (add_divider) {
-            ul_elem.addChild("li", null, "divider");
+            ul_elmt.makeElement("li", "divider");
         }
     }
 
     display_page.links.each(function(link) {
         if (link.isVisible(session, this_val, primary_row)) {
-            if (!ul_elem) {
+            if (!ul_elmt) {
                 renderDropdown();
             }
-            link.renderNavOption(ul_elem, render_opts, this_val);
+            link.renderNavOption(ul_elmt, render_opts, this_val);
             count += 1;
         }
     });
     
     if (count === 0 && display_url) {
-        parent_elem.addChild("a", null, "css_uni_icon")
-            .attribute("href", display_url)
-            .addText(this.nav_link_icon, true);
+        parent_elmt.makeUniIcon(this.nav_link_icon, display_url);
     }
-/* SF - this extra div is causing some issues - needs further testing in a dev branch...
-    if(parent_elem.parent.parent.name == "td"){
-        //CL - This dummy div allows absolute positioning on div.dropdown but keeps the icon to remain in place 
-        div_elem = parent_elem.addChild( "div", null, "css_ref_dummy" );
-        div_elem.addChild("img")
-                .attribute("src", "/rsl_shared/style/Axialis/Png/16x16/Link.png");
-    }
-*/
     return count;
 };
 
 
-x.data.Reference.renderEditable = function (div, render_opts, inside_table) {
+x.data.Reference.renderEditable = function (div_elmt, render_opts, inside_table) {
     x.log.functionStart("renderEditable", this, arguments);
     if (this.ref_entity && !x.entities[this.ref_entity]) {
         throw new Error("Field " + this.toString() + " has unrecognised ref_entity: " + this.ref_entity);
     }
     if (typeof this.render_autocompleter === "boolean") {
         if (this.render_autocompleter) {
-            this.renderAutocompleter(div, render_opts);
+            this.renderAutocompleter(div_elmt, render_opts);
         } else {
-            this.renderDropdown     (div, render_opts);
+            this.renderDropdown     (div_elmt, render_opts);
         }
     } else {
         if (x.entities[this.ref_entity].autocompleter) {
-            this.renderAutocompleter(div, render_opts);
+            this.renderAutocompleter(div_elmt, render_opts);
         } else {
-            this.renderDropdown     (div, render_opts);
+            this.renderDropdown     (div_elmt, render_opts);
         }
     }
+    return div_elmt;
 };
 
 
-x.data.Reference.renderAutocompleter = function (div, render_opts) {
-    var input,
-        input2;
+x.data.Reference.renderAutocompleter = function (div_elmt, render_opts) {
+    var input_elmt;
     x.log.functionStart("renderAutocompleter", this, arguments);
-    input = div.addChild("input", null, this.getEditableSizeCSSClass(render_opts));
-    input.attribute("value", this.getText());
-    input.attribute("type" , "text");
-//    input.attribute("size", Math.min(this.max_update_length, this.update_length).toFixed(0));
+    input_elmt = div_elmt.makeInput("text", this.getEditableSizeCSSClass(render_opts),
+        this.getControl(), this.getText());
     if (this.placeholder || this.helper_text) {
-        input.attribute("placeholder", this.placeholder || this.helper_text);
+        input_elmt.attr("placeholder", this.placeholder || this.helper_text);
     }
-    input2 = div.addChild("input", null, "css_hide");
-    input2.attribute("value", this.get());
-    input2.attribute("type" , "hidden");
-    return input;
+    return input_elmt;
 };
 
 
-x.data.Reference.renderDropdown = function (div, render_opts) {
-    var select;
+x.data.Reference.renderDropdown = function (div_elmt, render_opts) {
+    var select_elmt;
     x.log.functionStart("renderDropdown", this, arguments);
     this.getLoV();
     if (this.lov) {
         if (!this.lov.complete) {
             this.lov.loadEntity();
         }
-        select = this.lov.render(div, render_opts, this.val, this.getEditableSizeCSSClass(render_opts), this.mandatory);
+        select_elmt = this.lov.render(div_elmt, render_opts, this.val, this.getEditableSizeCSSClass(render_opts), this.mandatory);
     }
-    return select;
+    return select_elmt;
 };
 
-x.data.Reference.addClientSideProperties = function (span, render_opts) {
-    x.log.functionStart("addClientSideProperties", this, arguments);
-    if (!this.autocompleter_max_rows) {
-        this.autocompleter_max_rows   = x.entities[this.ref_entity].autocompleter_max_rows   || 10;
-    }
-    if (!this.autocompleter_min_length) {
-        this.autocompleter_min_length = x.entities[this.ref_entity].autocompleter_min_length || 2;
-    }
-    x.data.Text.addClientSideProperties.call(this, span, render_opts);
-};
 
 x.data.Reference.autocompleter = function (match, out) {
     x.log.functionStart("autocompleter", this, arguments);

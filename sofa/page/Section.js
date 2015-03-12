@@ -46,10 +46,10 @@ x.page.Section.presave.doc = {
 };
 
 
-x.page.Section.render = function (element, render_opts) {
+x.page.Section.render = function (parent_elmt, render_opts) {
     x.log.functionStart("render", this, arguments);
-    this.sctn_elem = null;
-    this.parent_elem = element;
+    this.sctn_elmt = null;
+    this.parent_elmt = parent_elmt;
     if (!this.hide_section_if_empty) {
         this.getSectionElement(render_opts);
     }
@@ -64,26 +64,22 @@ x.page.Section.render.doc = {
 x.page.Section.getSectionElement = function (render_opts) {
     var temp_title;
     x.log.functionStart("getSectionElement", this, arguments);
-    if (!this.sctn_elem) {
-        this.sctn_elem = x.io.browser.addElement(this.parent_elem, "div");
-        this.sctn_elem.attr("id", this.id);
-        this.sctn_elem.addClass(this.getCSSClass());
+    if (!this.sctn_elmt) {
+        this.sctn_elmt = this.parent_elmt.makeElement("div", this.getCSSClass(), this.id);
         temp_title = this.title || this.generated_title;
         if (temp_title) {
-            x.io.browser.addElement(this.sctn_elem, "h2")
-                .addClass("css_section_title")
+            this.sctn_elmt.makeElement("h2", "css_section_title")
                 .text(temp_title);
         }
         if (this.text) {
-            x.io.browser.addElement(this.sctn_elem, "div")
-                .addClass("css_section_text")
+            this.sctn_elmt.makeElement("div", "css_section_text")
                 .text(this.text);
         }
     }
-    return this.sctn_elem;
+    return this.sctn_elmt;
 };
 x.page.Section.getSectionElement.doc = {
-    purpose: "To output the opening elements of the section on first call - the outer div, its title and introductory text, and sets this.sctn_elem which is used by subsequent render logic for the section; can be called repeatedly to return this.sctn_elem",
+    purpose: "To output the opening elements of the section on first call - the outer div, its title and introductory text, and sets this.sctn_elmt which is used by subsequent render logic for the section; can be called repeatedly to return this.sctn_elmt",
     args   : "'render_opts' object map that controls aspects of page appearance",
     returns: "x.XmlStream object representing the main div of the section, to which subsequent content should be added"
 };
@@ -111,6 +107,28 @@ x.page.Section.isValid.doc = {
     purpose: "To report whether or not this section is entirely valid, to be overridden",
     args   : "none",
     returns: "true (to be overridden)"
+};
+
+x.page.Section.deduceKey = function () {
+    var key,
+        link_field;
+    if (this.key) {                         // key specified directly as a property
+        key = this.key;
+// needs to use getDocPromise()
+//    } else if (this.link_field) {           // via 'link_field' property
+//        link_field = this.owner.owner.entity.getField(this.link_field);
+//        if (!link_field) {
+//            throw new Error("link field is invalid: " + this.entity_id);
+//        }
+//        key = link_field.get();
+    } else if (this.owner.page.page_key_entity) {       // having same entity as page_key_entity
+        if (this.entity_id === this.owner.page.page_key_entity.path() && this.owner.page.page_key) {
+            key = this.owner.page.page_key;
+        }
+    } else if (this.entity_id === this.owner.page.entity.path() && this.owner.page.page_key) {     // having same key as page
+        key = this.owner.page.page_key;
+    }
+    return key;
 };
 
 

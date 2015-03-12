@@ -18,15 +18,11 @@ x.page.addClone(x.base.Base, {
     tab_sequence            : false,
     tab_forward_only        : false,
     allow_no_modifications  : false,
-});
-x.page.Page.doc = {
-    location                : "x",
-    file                    : "$Header: /rsl/rsl_app/core/page/Page.js,v 1.169 2014/08/15 13:22:32 francis Exp $",
     purpose                 : "Unit of system interaction, through the User Interface or a Machine Interface",
     properties : {
         title               : { label: "Page's text title", type: "string", usage: "required in spec" },
         short_title         : { label: "Text title for where space is tight", type: "string", usage: "optional in spec" },
-        entity              : { label: "Primary entity to which page relates", type: "x.data.Entity", usage: "optional in spec" },
+        owner               : { label: "Primary entity to which page relates", type: "x.data.Entity", usage: "use methods only" },
         requires_key        : { label: "Whether or not page needs a page_key", type: "boolean", usage: "optional in spec" },
         tabs                : { label: "OrderedMap of page tabs", type: "x.base.OrderedMap", usage: "use methods only" },
         sections            : { label: "OrderedMap of page sections", type: "x.base.OrderedMap", usage: "use methods only" },
@@ -43,12 +39,13 @@ x.page.Page.doc = {
         tab_forward_only    : { label: "If true AND tab_sequence is true, previous buttons NOT shown (defaults false)", type: "boolean", usage: "optional in spec" },
         allow_no_modifications: { label: "Allow this page is save without having made any changes (defaults false)", type: "boolean", usage: "optional in spec" }
     }
-};
+});
 
 x.page.Page.clone = function (spec) {
     var new_obj;
     x.log.functionStart("clone", this, arguments);
     new_obj = x.base.Base.clone.call(this, spec);
+    new_obj.entity = new_obj.owner;
     if (new_obj.instance) {
         new_obj.active = true;
         new_obj.fields = {};
@@ -58,10 +55,10 @@ x.page.Page.clone = function (spec) {
 //        new_obj.events         = this.events  .clone({ id: new_obj.id + ".events" });
 //        new_obj.events.page    = new_obj;
     }
-    new_obj.tabs           = this.tabs    .clone({ owner: new_obj, id: "tabs" });
-    new_obj.sections       = this.sections.clone({ owner: new_obj, id: "sections" });
-    new_obj.links          = this.links   .clone({ owner: new_obj, id: "links" });
-    new_obj.buttons        = this.buttons .clone({ owner: new_obj, id: "buttons" });
+    new_obj.tabs           = this.tabs    .clone({ owner: new_obj, page: new_obj, id: "tabs" });
+    new_obj.sections       = this.sections.clone({ owner: new_obj, page: new_obj, id: "sections" });
+    new_obj.links          = this.links   .clone({ owner: new_obj, page: new_obj, id: "links" });
+    new_obj.buttons        = this.buttons .clone({ owner: new_obj, page: new_obj, id: "buttons" });
     return new_obj;
 };
 
@@ -72,7 +69,7 @@ x.page.Page.setup = function () {
 //    this.events.trigger("setupStart", this);
     this.exit_url_save   = this.exit_url_save   || this.session.last_non_trans_page_url;
     this.exit_url_cancel = this.exit_url_cancel || this.session.last_non_trans_page_url;
-    this.getDocument();
+    this.getMainDocPromise();
     if (!this.full_title) {
         this.full_title = this.title;
     }
@@ -84,11 +81,6 @@ x.page.Page.setup = function () {
         this.page_tab = this.tabs.get(0);
     }
 //    this.events.trigger("setupEnd", this);
-};
-x.page.Page.setup.doc = {
-    purpose: "Initialise a Page instance for use - add buttons, call setup on Sections, etc",
-    args   : "none",
-    returns: "nothing"
 };
 
 x.page.Page.setupButtons = function () {
@@ -121,56 +113,6 @@ x.page.Page.setupButtons.doc = {
 };
 
 //---------------------------------------------------------------------------------------  update
-x.page.Page.update = function (params) {
-    x.log.functionStart("update", this, arguments);
-    x.log.debug(this, "update(" + JSON.stringify(params) + ")");
-    this.session.newVisit(this.id, this.getPageTitle(), this.record_parameters ? params : null, this.trans, this.page_key);
-    if (params.refer_page) {
-        this.session.refer_page = this.session.getPageFromCache(params.refer_page);
-        x.log.debug(this, "Refer page: " + this.session.refer_page);
-        if (this.session.refer_page && params.refer_section) {
-            this.session.refer_section = this.session.refer_page.sections.get(params.refer_section);
-            x.log.debug(this, "Refer section: " + this.session.refer_section);
-        }
-    }
-//    this.events.trigger("updateStart", this, params);
-    this.updateFields(params);
-    this.updateTabs(params);
-//    this.events.trigger("updateBeforeSections", this, params);
-    this.updateSections(params);
-//    this.events.trigger("updateAfterSections", this, params);
-    if (this.transactional) {
-        this.updateTrans(params);
-    }
-//    this.events.trigger("updateEnd", this, params);
-    this.session.updateVisit(parseInt(params.visit_start_time, 10));
-};
-x.page.Page.update.doc = {
-    purpose: "Update page's state using the parameter map supplied",
-    args   : "params: object map of strings",
-    returns: "nothing"
-};
-
-x.page.Page.updateFields = function (params) {
-    var that = this;
-    x.log.functionStart("updateFields", this, arguments);
-    this.fields.forOwn(function (field_id, field) {
-        var control = field.getControl();
-        if (typeof params[control] === "string") {
-            if (field.isEditable()) {
-                x.log.trace(that, "updateFields(): updating field " + control + " to value: " + params[control]);
-                field.set(params[control]);
-            } else {
-                x.log.warn(that, "updateFields(): Can't update uneditable field " + control + " to value: " + params[control]);
-            }
-        } else if (typeof params[control] !== "undefined") {
-            throw new Error("param is not a string: " + control + " = " + params[control]);
-        } else {
-            x.log.trace(that, "updateFields(): field not updated " + control);
-            field.prev_val = field.val;
-        }
-    });
-};
 
 
 x.page.Page.updateTabs = function (params) {
@@ -270,50 +212,6 @@ x.page.Page.moveToFirstErrorTab = function () {
     }
 };
 
-x.page.Page.updateSections = function (params) {
-    var i;
-    x.log.functionStart("updateSections", this, arguments);
-    for (i = 0; i < this.sections.length(); i += 1) {
-        this.sections.get(i).update(params);
-    }
-};
-x.page.Page.updateSections.doc = {
-    purpose: "Call update(params) on each section in the Page",
-    args   : "params: object map of strings",
-    returns: "nothing"
-};
-
-
-x.page.Page.updateTrans = function (params) {
-    var first_warnings,
-        save;
-    x.log.functionStart("updateTrans", this, arguments);
-    this.outcome_id = params.page_button;
-//    this.trans.messages.include_field_messages = false;
-//    first_warnings = this.trans.messages.firstWarnings();
-    save = this.outcome_id
-            && this.buttons.get(this.outcome_id)
-            && this.buttons.get(this.outcome_id).save;
-    if (this.outcome_id === "cancel") {
-        this.cancel();
-    } else if (save) {
-        if (first_warnings) {        // unreported warnings
-//            this.trans.messages.add({ type: 'W', report: false, warned: true, text: "Save aborted due to first-time-shown warnings" });
-        } else {
-//            this.checkChallengeToken(params);
-//            this.trans.messages.include_field_messages = true;
-//            this.save();
-            if (this.document) {
-                this.document.save();
-            }
-        }
-    }
-};
-x.page.Page.updateTrans.doc = {
-    purpose: "Cancel or attempt to Save this page depending on params.page_button",
-    args   : "params: object map of strings",
-    returns: "nothing"
-};
 
 
 x.page.Page.presave = function () {
@@ -426,7 +324,7 @@ x.page.Page.render = function (render_opts) {
 };
 
 x.page.Page.renderBody = function (render_opts) {
-    var page_elem;
+    var page_elmt;
     x.log.functionStart("render", this, arguments);
     if (!this.elements || !this.elements.body) {
         throw new Error("no container element specified");
@@ -435,21 +333,20 @@ x.page.Page.renderBody = function (render_opts) {
     if (typeof this.override_render_all_sections === "boolean") {
         render_opts.all_sections = this.override_render_all_sections;
     }
-    page_elem = x.io.browser.addElement(this.elements.body, "div");
-    page_elem.addClass("css_page");
-//    this.events.trigger("renderStart", this, page_elem, render_opts);
-    this.renderSections(page_elem, render_opts, this.page_tab ? this.page_tab.id : null);
+    page_elmt = this.elements.body.makeElement("div", "css_page");
+//    this.events.trigger("renderStart", this, page_elmt, render_opts);
+    this.renderSections(page_elmt, render_opts, this.page_tab ? this.page_tab.id : null);
     if (render_opts.include_buttons !== false) {
-        this.renderButtons(page_elem, render_opts);
+        this.renderButtons(page_elmt, render_opts);
     }
-//    this.events.trigger("renderEnd", this, page_elem, render_opts);
-    return page_elem;
+//    this.events.trigger("renderEnd", this, page_elmt, render_opts);
+    return page_elmt;
 };
 
 
-x.page.Page.renderSections = function (page_elem, render_opts, page_tab_id) {
-    var sections_elem,
-        div_elem,
+x.page.Page.renderSections = function (page_elmt, render_opts, page_tab_id) {
+    var sections_elmt,
+        div_elmt,
         row_span = 0,
         i,
         section,
@@ -458,22 +355,20 @@ x.page.Page.renderSections = function (page_elem, render_opts, page_tab_id) {
     if (page_tab_id) {
         x.log.debug(this, "Rendering tab: " + page_tab_id);
     }
-    sections_elem = x.io.browser.addElement(page_elem, "div");
-    sections_elem.addClass("css_page_sections");
+    sections_elmt = page_elmt.makeElement("div", "css_page_sections");
     for (i = 0; i < this.sections.length(); i += 1) {
         section = this.sections.get(i);
         tab     = section.tab && this.tabs.get(section.tab);
         if (section.visible && (!tab || tab.visible) && (render_opts.all_sections || !tab || section.tab === page_tab_id)) {
             row_span += section.tb_span;
-            if (!div_elem || row_span > 12) {
-                div_elem = x.io.browser.addElement(sections_elem, "div");
-                div_elem.addClass("row-fluid");
+            if (!div_elmt || row_span > 12) {
+                div_elmt = sections_elmt.makeElement("div", "row-fluid");
                 row_span = section.tb_span;
             }
-            section.render(div_elem, render_opts);
+            section.render(div_elmt, render_opts);
         }
     }
-    return sections_elem;
+    return sections_elmt;
 };
 x.page.Page.renderSections.doc = {
     purpose: "Call render() on each section that is associated with current tab or has no tab",
@@ -481,46 +376,69 @@ x.page.Page.renderSections.doc = {
     returns: "xmlstream div element object containing the section divs"
 };
 
-x.page.Page.renderButtons = function (page_elem, render_opts) {
-    var buttons_elem,
+x.page.Page.renderButtons = function (page_elmt, render_opts) {
+    var buttons_elmt,
         i;
     x.log.functionStart("renderButtons", this, arguments);
     for (i = 0; i < this.buttons.length(); i += 1) {
-        if (this.buttons.get(i).visible && !buttons_elem) {
-            buttons_elem = x.io.browser.addElement(page_elem,"div");
-            buttons_elem.addClass("css_page_buttons");
+        if (this.buttons.get(i).visible && !buttons_elmt) {
+            buttons_elmt = page_elmt.makeElement("div", "css_page_buttons");
         }
-        this.buttons.get(i).render(buttons_elem, render_opts);
+        this.buttons.get(i).render(buttons_elmt, render_opts);
     }
-    return buttons_elem;
+    return buttons_elmt;
 };
 
 
 x.page.Page.renderTabs = function (render_opts) {
+    var that = this,
+        at_least_one_tab = false;
+    x.log.functionStart("renderTabs", this, arguments);
+    this.elements.tabs.empty();
+    this.tabs.each(function (tab) {
+        if (tab.visible) {
+            tab.render(that.elements.links, render_opts);
+            at_least_one_tab = true;
+        }
+    });
+    if (at_least_one_tab) {
+        this.elements.tabs.removeClass("hide");
+        this.elements.body.    addClass("css_body_tabs_above");
+    } else {
+        this.elements.tabs.   addClass("hide");
+        this.elements.body.removeClass("css_body_tabs_above");
+    }
 };
 
 x.page.Page.renderLinks = function (render_opts) {
+    var that = this;
+    x.log.functionStart("renderLinks", this, arguments);
+    this.elements.links.empty();
+    this.links.each(function (link) {
+        if (link.visible) {
+            link.render(that.elements.links, render_opts);
+        }
+    });
 };
 
-x.page.Page.getDocument = function () {
-    x.log.functionStart("getDocument", this, arguments);
-    if (!this.document && this.entity) {
+x.page.Page.getMainDocPromise = function () {
+    var that = this;
+    x.log.functionStart("getMainDocPromise", this, arguments);
+    if (!this.doc_promise && this.owner) {
         if (this.requires_key && !this.page_key) {
             throw new Error("no page_key supplied and page requires one");
         }
-        this.document = this.entity.getDocument(this.page_key);
-        if (!this.full_title) {
-            if (this.document.action !== "C") {
-                this.full_title = this.title + ": " + this.document.getLabel("page_title_addl");
+        this.doc_promise = this.owner.getDocPromise(this.page_key);
+        this.doc_promise.then(function (document) {
+            that.main_doc = document;
+            if (!that.full_title) {
+                if (document.action !== "C") {
+                    that.full_title = that.title + ": " + document.getLabel("page_title_addl");
+                }
             }
-        }
+        });
     }
-    return this.document;
-};
-x.page.Page.getDocument.doc = {
-    purpose: "Returns the primary row of this page, if it has one",
-    args   : "none",
-    returns: "Descendent of Entity object, modifiable if the page is transactional"
+    return this.doc_promise;
 };
 
 
@@ -550,7 +468,7 @@ x.page.Page.getPageTitle.doc = {
 
 x.page.Page.addField = function (field) {
     var control = field.getControl();
-    x.log.functionStart("addField", arguments);
+    x.log.functionStart("addField", this, arguments);
     x.log.trace(this, "Adding field " + field + " to page.fields with control: " + control);
     if (this.fields[control]) {
         throw new Error("field with this control already exists: " + control);

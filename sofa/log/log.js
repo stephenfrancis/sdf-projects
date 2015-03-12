@@ -59,7 +59,7 @@ x.log.fatal = function (a, b) {
 };
 
 x.log.doLog = function (a, b, level) {
-    var str = (a ? (a.path() !== "/" ? a.path() : a) + ": " : "") + (b && b.path() !== "/" ? b.path() : b);
+    var str = a + ": " + b;
     if (!this.counters[level]) {
         this.counters[level] = 0;
     }
@@ -172,7 +172,7 @@ x.log.printCounters = function printCounters() {
     this.printLine(str);
 };
 
-x.log.level = x.log.levels.info;
+x.log.level = x.log.levels.debug;
 
 
 //To show up in Chrome debugger...

@@ -88,25 +88,24 @@ x.data.Number.format = function (number_val) {
 };
 
 
-x.data.Text.renderEditable = function (div, render_opts, inside_table) {
-    var str;
+x.data.Text.renderEditable = function (parent_elmt, render_opts, inside_table) {
+    var input_elmt;
     x.log.functionStart("renderEditable", this, arguments);
-    str = "<input type='" + this.input_type + "' class='" + this.getEditableSizeCSSClass(render_opts) +
-        "' value='" + this.getUpdateText() + "' id='" + this.getControl();
+    input_elmt = parent_elmt.makeInput(this.input_type, this.getEditableSizeCSSClass(render_opts),
+        this.getControl(), this.getUpdateText());
     if (this.placeholder || this.helper_text) {
-        str += "' placeholder='" + (this.placeholder || this.helper_text);
+        input_elmt.attr("placeholder", this.placeholder || this.helper_text);
     }
     if (typeof this.max === "number") {
-        str += "' max='" + this.max;
+        input_elmt.attr("max", this.max);
     }
     if (typeof this.min === "number") {
-        str += "' min='" + this.min;
+        input_elmt.attr("min", this.min);
     }
     if (typeof this.decimal_digits === "number") {
-        str += "' step='" + String(1 / Math.pow(10, parseInt(this.decimal_digits, 10)));
+        input_elmt.attr("step". String(1 / Math.pow(10, parseInt(this.decimal_digits, 10))));
     }
-    str += "' />";
-    div.addHTML(str);
+    return input_elmt;
 };
 
 

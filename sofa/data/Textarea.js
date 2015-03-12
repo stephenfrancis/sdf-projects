@@ -37,29 +37,33 @@ x.data.Textarea.set = function (new_val) {
 };
 
 
-x.data.Textarea.renderEditable = function (div, render_opts, inside_table) {
-    var str;
+x.data.Textarea.renderEditable = function (parent_elmt, render_opts, inside_table) {
+    var elmt;
     x.log.functionStart("renderEditable", this, arguments);
     if (this.css_richtext && render_opts.enable_aloha !== false) {
-//        div.attribute("id", this.getControl());
-        div.addChild("div").addText(this.val, true);        // true = don't escape markup
+//        div.attr("id", this.getControl());
+        elmt = parent_elmt.makeElement("div").html(this.val);        // true = don't escape markup
     } else {
-        str = "<textarea class='" + this.getEditableSizeCSSClass(render_opts) +
-            "' rows='" + this.rows.toFixed(0) + "' id='" + this.getControl() + " '>" + this.val + "</textarea>";
-        div.addHTML(str);
+        elmt = parent_elmt.makeElement("textarea", this.getEditableSizeCSSClass(render_opts), this.getControl())
+            .attr("rows", this.rows.toFixed(0))
+            .text(this.val);
     }
+    return elmt;
 };
 
-x.data.Textarea.renderUneditable = function (elem, render_opts, inside_table) {
+x.data.Textarea.renderUneditable = function (parent_elmt, render_opts, inside_table) {
     var style;
     x.log.functionStart("renderUneditable", this, arguments);
     style = this.getUneditableCSSStyle();
     if (style) {
-        elem.attribute("style", style);
+        parent_elmt.attr("style", style);
     }
     if (this.getText()) {
-        elem.addText(this.getText(), this.css_richtext);        // don't escape markup if richtext
-//        delete this.allow_video;
+        if (this.css_richtext) {        // don't escape markup if richtext
+            parent_elmt.html(this.getText());
+        } else {
+            parent_elmt.text(this.getText());
+        }
     }
 };
 

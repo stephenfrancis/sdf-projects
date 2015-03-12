@@ -20,7 +20,10 @@ x.page.addClone(x.page.Section, {
     }
 });
 
-
+/**
+ * Add the FieldSet argument to this object and call its addFieldsByControl() method to add its fields to the page-level field collection
+ * @param FieldSet object to apply to this section
+ */
 x.page.FormBase.setFieldSet = function (fieldset) {
     x.log.functionStart("setFieldSet", this, arguments);
     this.fieldset = fieldset;
@@ -32,21 +35,13 @@ x.page.FormBase.setFieldSet = function (fieldset) {
         this.fieldset.tb_input = this.multi_col_tb_input;
     }
 };
-x.page.FormBase.setFieldSet.doc = {
-    purpose: "Add the FieldSet argument to this object and call its addFieldsByControl() method to add its fields to the page-level field collection",
-    args   : "FieldSet object to apply to this section",
-    returns: "nothing"
-};
 
-
+/**
+ * Return this section's FieldSet object
+ */
 x.page.FormBase.getFieldSet = function () {
     x.log.functionStart("getFieldSet", this, arguments);
     return this.fieldset;
-};
-x.page.FormBase.getFieldSet.doc = {
-    purpose: "Return this section's FieldSet object",
-    args   : "none",
-    returns: "This section's FieldSet object"
 };
 
 
@@ -56,13 +51,27 @@ x.page.FormBase.isValid = function () {
 };
 
 
-x.page.FormBase.render = function (element, render_opts) {
-    var count = 0;
+x.page.FormBase.render = function (parent_elmt, render_opts) {
+    var that = this;
     x.log.functionStart("render", this, arguments);
-    x.page.Section.render.call(this, element, render_opts);
-    this.form_elem = null;
-    if (!this.fieldset) {
-        throw new Error("fieldset property not defined - call setFieldSet()");
+    x.page.Section.render.call(this, parent_elmt, render_opts);
+    this.form_elmt = null;
+    if (this.fieldset) {
+        this.rerender(render_opts);
+    } else {
+        this.initDoc();
+        this.doc_promise.then(function (doc) {
+            that.setFieldSet(doc);
+            that.rerender(render_opts);
+        });
+    }
+};
+
+
+x.page.FormBase.rerender = function (render_opts) {
+    var count = 0;
+    if (this.form_elmt) {
+        this.form_elmt.empty();
     }
     if (this.layout === "form-horizontal") {
         count += this.renderFormHorizontal(this.fieldset, render_opts);
@@ -74,8 +83,9 @@ x.page.FormBase.render = function (element, render_opts) {
         count += this.renderFormMultiColumn(this.fieldset, render_opts);
     }
     count += this.renderSeparateTextareas(this.fieldset, render_opts);
-    if (count === 0 && this.sctn_elem) {        // this.sctn_elem will be set if hide_section_if_empty = false
-        this.sctn_elem.addChild("div", null, "css_form_footer").addText("no items");
+    if (count === 0 && this.section_elmt) {        // this.sctn_elmt will be set if hide_section_if_empty = false
+        this.section_elmt.makeElement("div", "css_form_footer")
+            .text("no items");
     }
 };
 x.page.FormBase.render.doc = {
@@ -88,13 +98,13 @@ renderFormFluid(), or renderFormMultiColumn(), and then renderSeparateTextareas(
 
 x.page.FormBase.getFormElement = function (render_opts) {
     x.log.functionStart("getFormElement", this, arguments);
-    if (!this.form_elem) {
-        this.form_elem = this.getSectionElement(render_opts).addChild("div", null, "css_form_body " + this.layout);
+    if (!this.form_elmt) {
+        this.form_elmt = this.getSectionElement(render_opts).makeElement("div", "css_form_body " + this.layout);
     }
-    return this.form_elem;
+    return this.form_elmt;
 };
 x.page.FormBase.getFormElement.doc = {
-    purpose: "To return the form_elem XmlStream object (a div) during render, creating it if it doesn't already exist",
+    purpose: "To return the form_elmt XmlStream object (a div) during render, creating it if it doesn't already exist",
     args   : "render_opts",
     returns: "XmlStream object for this section's form div element"
 };
@@ -143,7 +153,7 @@ x.page.FormBase.renderFormFluid = function (fieldset, render_opts, section_opts)
     var i,
         row_span = 0,
         field,
-        div_elem,
+        div_elmt,
         count = 0;
     x.log.functionStart("renderFormFluid", this, arguments);
     if (!section_opts) {
@@ -153,12 +163,12 @@ x.page.FormBase.renderFormFluid = function (fieldset, render_opts, section_opts)
         field = fieldset.getField(i);
         if (this.isFieldVisible(field, section_opts)) {
             row_span += field.tb_span;
-            if (!div_elem || row_span > 12) {
-                div_elem = this.getFormElement(render_opts).addChild("div", null, "row-fluid");
+            if (!div_elmt || row_span > 12) {
+                div_elmt = this.getFormElement(render_opts).makeElement("div", "row-fluid");
                 row_span = field.tb_span;
             }
-            field.renderFormFluid(div_elem, render_opts);
-    //        field.renderFormFluid2(div_elem, render_opts);
+            field.renderFormFluid(div_elmt, render_opts);
+    //        field.renderFormFluid2(div_elmt, render_opts);
             count += 1;
         }
     }
@@ -175,8 +185,8 @@ x.page.FormBase.renderFormMultiColumn = function (fieldset, render_opts, section
     var i,
         curr_col = 1,
         field,
-        table_elem,
-        tr_elem,
+        table_elmt,
+           tr_elmt,
         count = 0;
     x.log.functionStart("renderFormMultiColumn", this, arguments);
     if (!section_opts) {
@@ -185,16 +195,16 @@ x.page.FormBase.renderFormMultiColumn = function (fieldset, render_opts, section
     for (i = 0; i < fieldset.getFieldCount(); i += 1) {
         field = fieldset.getField(i);
         if (this.isFieldVisible(field, section_opts)) {
-            if (!table_elem) {
-                table_elem = this.getFormElement(render_opts).addChild("table", null, "multi-column");
+            if (!table_elmt) {
+                table_elmt = this.getFormElement(render_opts).makeElement("table", "multi-column");
             }
             curr_col += 1;
-            if (!tr_elem || curr_col > this.columns) {
-                tr_elem = table_elem.addChild("tr");
+            if (!tr_elmt || curr_col > this.columns) {
+                tr_elmt = table_elmt.makeElement("tr");
                 curr_col = 1;
             }
-            field.renderLabel(tr_elem.addChild("td"), render_opts);
-            field.render     (tr_elem.addChild("td"), render_opts);
+            field.renderLabel(tr_elmt.makeElement("td"), render_opts);
+            field.render     (tr_elmt.makeElement("td"), render_opts);
             count += 1;
         }
     }
@@ -210,7 +220,7 @@ x.page.FormBase.renderFormMultiColumn.doc = {
 x.page.FormBase.renderSeparateTextareas = function (fieldset, render_opts, section_opts) {
     var i,
         field,
-        div_elem,
+        div_elmt,
         count = 0;
     x.log.functionStart("renderSeparateTextareas", this, arguments);
     if (!section_opts) {
@@ -224,8 +234,8 @@ x.page.FormBase.renderSeparateTextareas = function (fieldset, render_opts, secti
         if (!section_opts.separate_textareas || !field.separate_row_in_form) {
             continue;
         }
-        div_elem = this.getFormElement(render_opts).addChild("div", null, "row-fluid");
-        field.renderFormFluid(div_elem, render_opts);
+        div_elmt = this.getFormElement(render_opts).makeElement("div", "row-fluid");
+        field.renderFormFluid(div_elmt, render_opts);
         count += 1;
     }
     return count;
@@ -246,23 +256,18 @@ x.page.addClone(x.page.FormBase, {
     separate_textareas: true,
     purpose: "To show a record read-only",
     properties: {
-        entity        : { label: "String id of entity to display", type: "string", usage: "required in spec" },
+        entity_id     : { label: "String id of entity to display", type: "string", usage: "required in spec" },
     }
 });
 
 x.page.Display.setup = function () {
-    var key;
     x.log.functionStart("setup", this, arguments);
     x.page.FormBase.setup.call(this);
     if (this.fieldset) {
         return;                    // done manually in setupStart
     }
-    if (!this.entity || !x.entities[this.entity]) {
-        throw new Error("entity not found: " + this.entity);
-    }
-    key = this.deduceKey();
-    if (key) {
-        this.setFieldSet(x.entities[this.entity].getRow(key));
+    if (!this.entity_id) {
+        throw new Error("entity_id not supplied: " + this.entity_id);
     }
 };
 x.page.Display.setup.doc = {
@@ -271,10 +276,24 @@ x.page.Display.setup.doc = {
     returns: "nothing"
 };
 
-x.page.Display.update = function (param) {
+
+x.page.Display.initDoc = function () {
+    var entity,
+        key;
     x.log.functionStart("update", this, arguments);
-    x.page.FormBase.update(param);
-    this.fieldset.reload();
+    entity = x.base.Module.getEntity(this.entity_id);
+    if (!entity) {
+        throw new Error("entity not found: " + this.entity_id);
+    }
+    key = this.deduceKey();
+    if (key) {
+        this.doc_promise = entity.getDocPromise(key);
+        this.doc_promise.then(function (doc) {
+            doc.modifiable = false;
+        });
+    } else {
+        throw new Error("no key supplied or deduced");
+    }
 };
 
 
@@ -295,9 +314,9 @@ x.page.Create.setup = function () {
     }
     if (this.link_field) {
         this.setFieldSet(this.owner.page.getTrans().createNewRow(this.entity));
-        this.fieldset.linkToParent(this.owner.page.getPrimaryRow(), this.link_field);
+        this.fieldset.linkToParent(this.owner.page.getDocument(), this.link_field);
     } else if (this.entity === this.owner.page.entity.id) {
-        this.setFieldSet(this.owner.page.getPrimaryRow());
+        this.setFieldSet(this.owner.page.getDocument());
     } else {
         this.setFieldSet(this.owner.page.getTrans().createNewRow(this.entity));
     }
