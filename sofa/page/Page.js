@@ -18,6 +18,7 @@ x.page.addClone(x.base.Base, {
     tab_sequence            : false,
     tab_forward_only        : false,
     allow_no_modifications  : false,
+    skin                    : "index.html",
     purpose                 : "Unit of system interaction, through the User Interface or a Machine Interface",
     properties : {
         title               : { label: "Page's text title", type: "string", usage: "required in spec" },
@@ -231,8 +232,8 @@ x.page.Page.presave.doc = {
 
 x.page.Page.save = function () {
     x.log.functionStart("save", this, arguments);
-    if (this.document && this.document.isValid()) {
-        this.document.save();
+    if (this.main_doc && this.main_doc.isValid()) {
+        this.main_doc.save();
     }
 };
 /*
@@ -344,83 +345,6 @@ x.page.Page.renderBody = function (render_opts) {
 };
 
 
-x.page.Page.renderSections = function (page_elmt, render_opts, page_tab_id) {
-    var sections_elmt,
-        div_elmt,
-        row_span = 0,
-        i,
-        section,
-        tab;
-    x.log.functionStart("renderSections", this, arguments);
-    if (page_tab_id) {
-        x.log.debug(this, "Rendering tab: " + page_tab_id);
-    }
-    sections_elmt = page_elmt.makeElement("div", "css_page_sections");
-    for (i = 0; i < this.sections.length(); i += 1) {
-        section = this.sections.get(i);
-        tab     = section.tab && this.tabs.get(section.tab);
-        if (section.visible && (!tab || tab.visible) && (render_opts.all_sections || !tab || section.tab === page_tab_id)) {
-            row_span += section.tb_span;
-            if (!div_elmt || row_span > 12) {
-                div_elmt = sections_elmt.makeElement("div", "row-fluid");
-                row_span = section.tb_span;
-            }
-            section.render(div_elmt, render_opts);
-        }
-    }
-    return sections_elmt;
-};
-x.page.Page.renderSections.doc = {
-    purpose: "Call render() on each section that is associated with current tab or has no tab",
-    args   : "xmlstream page-level div element object; render_opts",
-    returns: "xmlstream div element object containing the section divs"
-};
-
-x.page.Page.renderButtons = function (page_elmt, render_opts) {
-    var buttons_elmt,
-        i;
-    x.log.functionStart("renderButtons", this, arguments);
-    for (i = 0; i < this.buttons.length(); i += 1) {
-        if (this.buttons.get(i).visible && !buttons_elmt) {
-            buttons_elmt = page_elmt.makeElement("div", "css_page_buttons");
-        }
-        this.buttons.get(i).render(buttons_elmt, render_opts);
-    }
-    return buttons_elmt;
-};
-
-
-x.page.Page.renderTabs = function (render_opts) {
-    var that = this,
-        at_least_one_tab = false;
-    x.log.functionStart("renderTabs", this, arguments);
-    this.elements.tabs.empty();
-    this.tabs.each(function (tab) {
-        if (tab.visible) {
-            tab.render(that.elements.links, render_opts);
-            at_least_one_tab = true;
-        }
-    });
-    if (at_least_one_tab) {
-        this.elements.tabs.removeClass("hide");
-        this.elements.body.    addClass("css_body_tabs_above");
-    } else {
-        this.elements.tabs.   addClass("hide");
-        this.elements.body.removeClass("css_body_tabs_above");
-    }
-};
-
-x.page.Page.renderLinks = function (render_opts) {
-    var that = this;
-    x.log.functionStart("renderLinks", this, arguments);
-    this.elements.links.empty();
-    this.links.each(function (link) {
-        if (link.visible) {
-            link.render(that.elements.links, render_opts);
-        }
-    });
-};
-
 x.page.Page.getMainDocPromise = function () {
     var that = this;
     x.log.functionStart("getMainDocPromise", this, arguments);
@@ -446,7 +370,7 @@ x.page.Page.getSimpleURL = function (override_key) {
     var page_key;
     x.log.functionStart("getSimpleURL", this, arguments);
     page_key = override_key || this.page_key;
-    return this.skin + "?page_id=" + this.id + (page_key ? "&page_key=" + page_key : "");
+    return this.skin + "?page_id=" + this.path() + (page_key ? "&page_key=" + page_key : "");
 };
 x.page.Page.getSimpleURL.doc = {
     purpose: "Returns the minimal query string referencing this page, including its page_key if it has one",

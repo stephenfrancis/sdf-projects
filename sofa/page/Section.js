@@ -152,5 +152,40 @@ x.page.Page.sections.add.doc = {
 };
 
 
+x.page.Page.renderSections = function (page_elmt, render_opts, page_tab_id) {
+    var sections_elmt,
+        div_elmt,
+        row_span = 0,
+        i,
+        section,
+        tab;
+    x.log.functionStart("renderSections", this, arguments);
+    if (page_tab_id) {
+        x.log.debug(this, "Rendering tab: " + page_tab_id);
+    }
+    sections_elmt = page_elmt.makeElement("div", "css_page_sections");
+    for (i = 0; i < this.sections.length(); i += 1) {
+        section = this.sections.get(i);
+        tab     = section.tab && this.tabs.get(section.tab);
+        if (section.visible && (!tab || tab.visible) && (render_opts.all_sections || !tab || section.tab === page_tab_id)) {
+            row_span += section.tb_span;
+            if (!div_elmt || row_span > 12) {
+                div_elmt = sections_elmt.makeElement("div", "row-fluid");
+                row_span = section.tb_span;
+            }
+            section.render(div_elmt, render_opts);
+        }
+    }
+    return sections_elmt;
+};
+x.page.Page.renderSections.doc = {
+    purpose: "Call render() on each section that is associated with current tab or has no tab",
+    args   : "xmlstream page-level div element object; render_opts",
+    returns: "xmlstream div element object containing the section divs"
+};
+
+
+
+
 //To show up in Chrome debugger...
 //@ sourceURL=page/Section.js

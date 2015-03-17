@@ -51,6 +51,28 @@ x.page.FormBase.isValid = function () {
 };
 
 
+x.page.FormBase.initDoc = function () {
+    var that = this,
+        entity,
+        key;
+    x.log.functionStart("initDoc", this, arguments);
+    entity = x.base.Module.getEntity(this.entity_id);
+    if (!entity) {
+        throw new Error("entity not found: " + this.entity_id);
+    }
+    key = this.deduceKey();
+    if (key) {
+        this.doc_promise = entity.getDocPromise(key);
+        this.doc_promise.then(function (doc) {
+            that.onDocLoad(doc);
+        });
+    } else {
+        throw new Error("no key supplied or deduced");
+    }
+};
+
+x.page.FormBase.onDocLoad = function (doc) {};
+
 x.page.FormBase.render = function (parent_elmt, render_opts) {
     var that = this;
     x.log.functionStart("render", this, arguments);
@@ -276,25 +298,11 @@ x.page.Display.setup.doc = {
     returns: "nothing"
 };
 
-
-x.page.Display.initDoc = function () {
-    var entity,
-        key;
-    x.log.functionStart("update", this, arguments);
-    entity = x.base.Module.getEntity(this.entity_id);
-    if (!entity) {
-        throw new Error("entity not found: " + this.entity_id);
-    }
-    key = this.deduceKey();
-    if (key) {
-        this.doc_promise = entity.getDocPromise(key);
-        this.doc_promise.then(function (doc) {
-            doc.modifiable = false;
-        });
-    } else {
-        throw new Error("no key supplied or deduced");
-    }
+x.page.Display.onDocLoad = function (doc) {
+    doc.modifiable = false;
 };
+
+
 
 
 x.page.addClone(x.page.FormBase, {
@@ -348,12 +356,11 @@ x.page.Update.setup = function () {
     var key;
     x.log.functionStart("setup", this, arguments);
     x.page.Section.setup.call(this);
-    if (!this.entity || !x.entities[this.entity]) {
-        throw new Error("entity not found: " + this.entity);
+    if (this.fieldset) {
+        return;                    // done manually in setupStart
     }
-    key = this.deduceKey();
-    if (key) {
-        this.setFieldSet(this.owner.page.getTrans().getActiveRow(this.entity, key));
+    if (!this.entity_id) {
+        throw new Error("entity_id not supplied: " + this.entity_id);
     }
 };
 x.page.Update.setup.doc = {

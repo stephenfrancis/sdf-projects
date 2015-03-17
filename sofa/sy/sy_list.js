@@ -81,7 +81,7 @@ x.sy.List.pages.display.sections.addAll([
 ]);
 x.sy.List.pages.display.links.addAll([
     { id: "update", page_to: "x.sy.List.update", page_key: "{page_key}" }, 
-    { id: "delete", page_to: "x.sy.List.delete", page_key: "{page_key}" }
+    { id: "delete", page_to: "x.sy.List.deleet", page_key: "{page_key}" }
 ]);
 // End of Page sy_list_display
 

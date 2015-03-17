@@ -145,24 +145,32 @@ x.data.Entity.load = function (resolve, reject) {
     this.status = 'L';    // Loading
     x.io.http({ url: this.getLoadURL(this.id), cache: false, async: false, type: "GET",
         success: function (data_back) {
-            x.log.debug(that, "calling load.success()");
-            if (that.status !== 'L') {
-                reject("invalid document status - " + that.status);
-            }
-            that.populate(data_back);
-//            that.primary_key.setInitial(that.doc_id);
-            that.primary_key_field.fixed_key = true;
-            that.rev    = data_back._rev;
-            that.status = 'U';
-            resolve(that);
+            that.loadSuccess(resolve, reject, data_back);
         },
         error: function (code, msg) {
-            x.log.debug(that, "calling load.error()");
-            that.status = 'E';
-            that.error = code.status;
-            reject(that.error);
+            that.loadError(resolve, reject, code, msg);
         }
     });
+};
+
+x.data.Entity.loadSuccess = function (resolve, reject, data_back) {
+    x.log.functionStart("loadSuccess", this, arguments);
+    if (this.status !== 'L') {
+        reject("invalid document status - " + this.status);
+    }
+    this.populate(data_back);
+//            this.primary_key.setInitial(this.doc_id);
+    this.primary_key_field.fixed_key = true;
+    this.rev    = data_back._rev;
+    this.status = 'U';
+    resolve(this);
+};
+
+x.data.Entity.loadError = function (resolve, reject, code, msg) {
+    x.log.functionStart("loadError", this, arguments);
+    this.status = 'E';
+    this.error = code.status;
+    reject(this.error);
 };
 
 x.data.Entity.getSaveURL = function () {
@@ -186,29 +194,37 @@ x.data.Entity.save = function (resolve, reject) {
     this.status = 'S';    // Saving
     x.io.http({ url: this.getSaveURL(), cache: false, async: false, type: (this.doc_id ? "PUT" : "POST"), data: JSON.stringify(this.getData()),
         success: function (data_back) {
-            x.log.debug(that, "calling save.success()");
-            if (that.status !== 'S') {
-                reject("invalid document status: " + that.status);
-            }
-            if (data_back.ok) {
-                that.status = 'U';
-                that.doc_id = data_back.id;
-                that.rev    = data_back.rev;
-                // trigger loaded
-                resolve(that);
-            } else {
-                that.status = 'E';
-                that.error  = "unknown: " + data_back.ok;
-                reject(that.error);
-            }
+            that.saveSuccess(resolve, reject, data_back);
         },
         error: function (code, msg) {
-            x.log.debug(that, "calling save.error()");
-            that.status = 'E';
-            that.error  = "[" + code + "] " + msg;
-            reject(that.error);
+            that.saveError(resolve, reject, code, msg);
         }
     });
+};
+
+x.data.Entity.saveSuccess = function (resolve, reject, data_back) {
+    x.log.functionStart("saveSuccess", this, arguments);
+    if (this.status !== 'S') {
+        reject("invalid document status: " + this.status);
+    }
+    if (data_back.ok) {
+        this.status = 'U';
+        this.doc_id = data_back.id;
+        this.rev    = data_back.rev;
+        // trigger loaded
+        resolve(this);
+    } else {
+        this.status = 'E';
+        this.error  = "unknown: " + data_back.ok;
+        reject(this.error);
+    }
+};
+
+x.data.Entity.saveError = function (resolve, reject, code, msg) {
+    x.log.functionStart("saveError", this, arguments);
+    this.status = 'E';
+    this.error  = "[" + code + "] " + msg;
+    reject(this.error);
 };
 
 x.data.Entity.populate = function (data_back) {
@@ -219,13 +235,13 @@ x.data.Entity.populate = function (data_back) {
             field.setInitial(data_back[field.id]);
         }
     });
-    // if (data_back.child_rows) {
-    //     data_back.child_rows.forOwn(function (entity_id, row_array) {
-    //         row_array.forOwn(function (i, row) {
-    //             that.addChild(entity_id).populate(row);
-    //         });
-    //     });
-    // }
+    if (data_back.child_rows) {
+        data_back.child_rows.forOwn(function (entity_id, row_array) {
+            row_array.forOwn(function (i, row) {
+                that.addChild(entity_id).populate(row);
+            });
+        });
+    }
 };
 
 x.data.Entity.getData = function () {
@@ -316,11 +332,7 @@ x.data.Entity.afterFieldChange = function (field, old_val) {
 };
 
 x.data.Entity.setModified = function () {
-    if (this.owner) {
-        this.owner.setModified();
-    } else {
-        this.status = "M";
-    }
+    this.status = "M";
 };
 
 

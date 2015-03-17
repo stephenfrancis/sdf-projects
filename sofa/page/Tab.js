@@ -58,5 +58,27 @@ x.page.Page.tabs.add.doc = {
 };
 
 
+x.page.Page.renderTabs = function (render_opts) {
+    var that = this,
+        at_least_one_tab = false;
+    x.log.functionStart("renderTabs", this, arguments);
+    this.elements.tabs.empty();
+    this.tabs.each(function (tab) {
+        if (tab.visible) {
+            tab.render(that.elements.links, render_opts);
+            at_least_one_tab = true;
+        }
+    });
+    if (at_least_one_tab) {
+        this.elements.tabs.removeClass("hide");
+        this.elements.body.    addClass("css_body_tabs_above");
+    } else {
+        this.elements.tabs.   addClass("hide");
+        this.elements.body.removeClass("css_body_tabs_above");
+    }
+};
+
+
+
 //To show up in Chrome debugger...
 //@ sourceURL=page/Tab.js

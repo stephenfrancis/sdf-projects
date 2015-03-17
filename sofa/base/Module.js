@@ -29,13 +29,25 @@ x.base.Module.getEntity = function (str) {
 };
 
 x.base.Module.getPage = function (str) {
-    var split = str.split(".");
+    var split = str.split("."),
+        obj;
     x.log.functionStart("getPage", this, arguments);
     if (split.length !== 4) {
         throw new Error("page_id must be of the form 'x.{module}.{Entity}.{page}': " + str);
     }
-    page = x[split[1]][split[2]].pages[split[3]];
-    return x.base.Base.walkPath.call(x, str.replace(/^x\./, ""));
+    obj = x[split[1]];
+    if (!obj) {
+        throw new Error("invalid module: " + split[1]);
+    }
+    obj = obj[split[2]];
+    if (!obj) {
+        throw new Error("invalid entity: " + split[2] + " in module " + split[1]);
+    }
+    obj = obj.pages[split[3]];
+    if (!obj) {
+        throw new Error("invalid page: " + split[3] + " in entity " + split[1] + "." + split[2]);
+    }
+    return obj;
 };
 
 //@ sourceURL=base/Module.js

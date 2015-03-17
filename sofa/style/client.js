@@ -1,11 +1,11 @@
-/*global  */
-"use strict";
+/*global document, window, $, x */
 
 // jQuery extension...
 
-jQuery.fn.extend({
+$.fn.extend({
     
     makeElement: function (tag, css_class, id) {
+        "use strict";
         var elmt;
         this.append("<" + tag + "/>");
         elmt = this.children(tag).last();
@@ -19,6 +19,7 @@ jQuery.fn.extend({
     },
 
     makeAnchor: function (label, href, css_class, id, target) {
+        "use strict";
         var anchor_elmt = this.makeElement("a", css_class, id);
         if (href) {
             anchor_elmt.attr("href"  , href);
@@ -31,6 +32,7 @@ jQuery.fn.extend({
     },
 
     makeUniIcon: function (icon, href, id) {
+        "use strict";
         var anchor_elmt = this.makeElement("a", "css_uni_icon", id);
         if (href) {
             anchor_elmt.attr("href", href);
@@ -40,6 +42,7 @@ jQuery.fn.extend({
     },
 
     makeDropdownUL: function (control) {
+        "use strict";
         var ul_elmt = this.makeElement("ul", "dropdown-menu")
             .attr("role", "menu")
             .attr("aria-labelledby", control);
@@ -47,6 +50,7 @@ jQuery.fn.extend({
     },
 
     makeDropdownIcon: function (icon, tooltip) {
+        "use strict";
         var anchor_elmt = this.makeUniIcon(icon);
         anchor_elmt.addClass("dropdown-toggle");
         anchor_elmt.attr("role", "button");
@@ -59,6 +63,7 @@ jQuery.fn.extend({
     },
 
     makeInput: function (type, css_class, id, value) {
+        "use strict";
         var input_elmt;
         this.append("<input type='" + type + "'/>");
         input_elmt = this.children(":input").last();
@@ -75,6 +80,7 @@ jQuery.fn.extend({
     },
 
     makeOption: function (id, label, selected) {
+        "use strict";
         var elmt = this.makeElement("option");
         elmt.attr("value", id);
         elmt.text(label);
@@ -85,6 +91,7 @@ jQuery.fn.extend({
     },
 
     makeRadio: function (name, selected) {
+        "use strict";
         var input_elmt = this.makeElement("input");
         input_elmt.attr("name", name);
         input_elmt.attr("type", "radio");
@@ -95,6 +102,7 @@ jQuery.fn.extend({
     },
 
     makeRadioLabelSpan : function (name, id, label, selected) {
+        "use strict";
         var  span_elmt = this.makeElement("span", "css_attr_item", name),
             label_elmt;
         
@@ -106,6 +114,7 @@ jQuery.fn.extend({
     },
 
     makeCheckbox: function (name, checked) {
+        "use strict";
         var input_elmt = this.makeElement("input");
         input_elmt.attr("name", name);
         input_elmt.attr("type", "checkbox");
@@ -116,6 +125,7 @@ jQuery.fn.extend({
     },
 
     makeCheckboxLabelSpan : function (name, id, label, checked) {
+        "use strict";
         var  span_elmt = this.makeElement("span", "css_attr_item", name),
             label_elmt;
         
@@ -124,7 +134,7 @@ jQuery.fn.extend({
         label_elmt.attr("for", name + "_" + id);
         label_elmt.text(label);
         return span_elmt;
-    },
+    }
 
 
 });
@@ -132,6 +142,22 @@ jQuery.fn.extend({
 
 
 var y = {};
+
+y.splitParams = function (str) {
+    "use strict";
+    var e,
+        a = /\+/g,  // Regex for replacing addition symbol with a space
+        r = /([^&=]+)=?([^&]*)/g,
+        d = function (s) { return decodeURIComponent(s.replace(a, " ")); },
+        q = str,
+        out = {};
+    e = r.exec(q);
+    while (e) {
+        out[d(e[1])] = d(e[2]);
+        e = r.exec(q);
+    }
+    return out;
+};
 
 y.session = x.ac.Session.clone({ user_id: "francis" });
 
@@ -145,6 +171,31 @@ y.page.sections.add({ id: "temp", type: "Section", title: "Wibble", text: "Wobbl
 */
 
 $(document).ready(function () {
+    "use strict";
+
+    $(document).on("click", ".css_cmd", function (event) {
+        var bind_object = $(this).data("bind_object");
+        if (bind_object) {
+            bind_object.click(event);
+        } else {
+            console.log("couldn't find bind object: " + $(this).attr("id"));
+        }
+    });
+
+    $(document).on("change", function (event) {
+        var input  = $(event.target),
+            id     = input.attr("id"),
+            val    = input.val(),
+            parent = input.parent(".css_edit"),
+            bind_object = parent.data("bind_object");
+
+        if (bind_object) {
+            console.log("parent obj found: " + bind_object);
+            bind_object.change(id, val);
+        } else {
+            console.log("couldn't find bind object: " + input.attr("id") + ", " + parent.length);
+        }
+    });
 
     y.elements = {
         messages: $(".css_messages"),
@@ -155,7 +206,11 @@ $(document).ready(function () {
         body    : $("#css_body")
     };
 
-    y.page = y.session.getPage("sy.List.display", "pqrs", y.elements);
+    y.url_params = y.splitParams(window.location.search.substring(1));
+
+    var page_id = y.url_params.page_id || "x.sy.List.display";
+
+    y.page = y.session.getPage(page_id, "pqrs", y.elements);
     y.page.render();
 });
 

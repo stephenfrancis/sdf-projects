@@ -3,6 +3,11 @@
 
 x.base.Base = { id: "Base", owner: x.base };
 
+/**
+* create a new object as a descendant of this one
+* @param {spec} properties to add to the new object overriding those of this
+* @return {object} new object, whose 'parent' property is set to this
+*/
 x.base.Base.clone = function (spec) {
 	var out = {};
 //	if (!spec.id) {

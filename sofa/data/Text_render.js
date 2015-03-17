@@ -2,22 +2,22 @@
 "use strict";
 
 
+
+x.data.Text.change = function (control_id, val) {
+    console.log(this + " change: " + control_id + ", " + val);
+    this.set(val);
+};
+
 x.data.Text.render = function (parent_elmt, render_opts) {
     var div_elmt;
     x.log.functionStart("render", this, arguments);
     div_elmt = parent_elmt.makeElement("div", this.getCSSClass());
+    div_elmt.data("bind_object", this);
     if (!this.validated) {
         this.validate();
     }
     this.renderInner(div_elmt, render_opts);
     return div_elmt;
-};
-x.data.Text.render.doc = {
-    purpose: "To add the necessary HTML to the element XmlStream to render this field according to its properties - if it is \
-editable, it calls renderEditable(), addClientSideProperties() and (if !isError()) renderErrors(), otherwise it calls \
-renderUneditable()",
-    args   : "the XmlStream object representing the parent element to which this field should be rendered, and render_opts",
-    returns: "the XmlStream object representing the 'div' element created by this function"
 };
 
 
@@ -31,13 +31,9 @@ x.data.Text.renderControlGroup = function (parent_elmt, render_opts) {
         this.validate();
     }
     inner_elmt = div_elmt.makeElement("div", "controls " + this.getCSSClass());
+    inner_elmt.data("bind_object", this);
     this.renderInner(inner_elmt, render_opts);
     return div_elmt;
-};
-x.data.Text.renderControlGroup.doc = {
-    purpose: "To render this field as a Twitter-Bootstrap Control Group",
-    args   : "the XmlStream object representing the parent element to which this field should be rendered, and render_opts",
-    returns: "the XmlStream object representing the 'div' element created by this function"
 };
 
 
@@ -63,11 +59,6 @@ x.data.Text.renderFormFluid = function (parent_elmt, render_opts) {
     this.renderInner(div_elmt, render_opts);
     return div_elmt;
 };
-x.data.Text.renderFormFluid.doc = {
-    purpose: "To render this field in a form",
-    args   : "the XmlStream object representing the parent element to which this field should be rendered, and render_opts",
-    returns: "the XmlStream object representing the 'div' element created by this function"
-};
 
 
 x.data.Text.renderCell = function (row_elmt, render_opts) {
@@ -81,11 +72,6 @@ x.data.Text.renderCell = function (row_elmt, render_opts) {
     }
     this.renderInner(div_elmt, render_opts);
     return cell_elmt;
-};
-x.data.Text.renderCell.doc = {
-    purpose: "To render a <td> element and its content, by calling render(), to be a list cell",
-    args   : "the XmlStream object representing the parent tr element to which this td should be rendered, and render_opts",
-    returns: "the XmlStream object representing the td element"
 };
 
 
@@ -101,12 +87,6 @@ x.data.Text.renderLabel = function (div_elmt, render_opts) {
     }
     return label_elmt;
 };
-x.data.Text.renderLabel.doc = {
-    purpose: "To render the label of this field, with a 'for' attribute to the control, and a tooltip if 'description' is given",
-    args   : "the XmlStream object representing the parent element to which this field should be rendered, and render_opts",
-    returns: "the XmlStream object representing the 'label' element created by this function"
-};
-
 
 
 x.data.Text.renderInner = function (div_elmt, render_opts) {
@@ -141,20 +121,10 @@ x.data.Text.renderEditable = function (div_elmt, render_opts, inside_table) {
     }
     return input_elmt;
 };
-x.data.Text.renderEditable.doc = {
-    purpose: "To render an editable control for this field",
-    args   : "the XmlStream object representing the parent div element to which this control should be rendered, and render_opts",
-    returns: "the XmlStream object representing the control (e.g. input)"
-};
 
 
 x.data.Text.getEditableSizeCSSClass = function (render_opts) {
     return render_opts.tb_input || this.tb_input || (this.owner && this.owner.tb_input);
-};
-x.data.Text.getEditableSizeCSSClass.doc = {
-    purpose: "To return the string CSS class for the editable input control for this field",
-    args   : "render_opts",
-    returns: "string, being tb_input property in render_opts, or else tb_input property of this field, or else tb_input property of owner"
 };
 
 /**
@@ -210,20 +180,10 @@ x.data.Text.renderUneditable = function (elmt, render_opts, inside_table) {
         elmt.text(text);
     }
 };
-x.data.Text.renderUneditable.doc = {
-    purpose: "To render an uneditable representation of this field into a parent div element, setting val and style attributes first, optionally an anchor link, and text",
-    args   : "the XmlStream object representing the parent div element to which this control should be rendered, and render_opts",
-    returns: "nothing"
-};
 
 
 x.data.Text.renderNavOptions = function (parent_elmt, render_opts, inside_table) {
     x.log.functionStart("renderNavOptions", this, arguments);
-};
-x.data.Text.renderNavOptions.doc = {
-    purpose: "Does nothing for most fields; for a Reference field, renders a drop-down set of context menu options",
-    args   : "the XmlStream object representing the parent div element to which this control should be rendered, and render_opts",
-    returns: "nothing"
 };
 
 
@@ -240,11 +200,6 @@ x.data.Text.renderErrors = function (parent_elmt, render_opts, inside_table) {
     x.log.debug(this, "Error text for field " + this.toString() + " = " + text);
     span_elmt.text(text);
     return text;
-};
-x.data.Text.renderErrors.doc = {
-    purpose: "To render message text as a span element with a 'help-inline' CSS class",
-    args   : "the XmlStream object representing the parent element to which this span should be rendered, and render_opts",
-    returns: "text"
 };
 
 
@@ -272,11 +227,6 @@ x.data.Text.getCSSClass = function () {
     }
     return css_class;
 };
-x.data.Text.getCSSClass.doc = {
-    purpose: "To get the string of CSS classes to use in HTML class attribute for the field",
-    args   : "none",
-    returns: "css class string"
-};
 
 
 x.data.Text.getCellCSSClass = function () {
@@ -288,20 +238,10 @@ x.data.Text.getCellCSSClass = function () {
     }
     return css_class;
 };
-x.data.Text.getCSSClass.doc = {
-    purpose: "To get the string of CSS classes to use in HTML class attribute for the table cell",
-    args   : "none",
-    returns: "css class string"
-};
 
 
 x.data.Text.getUneditableCSSStyle = function () {
     return null;
-};
-x.data.Text.getUneditableCSSStyle.doc = {
-    purpose: "To get the string of a CSS style attribute for this field when uneditable",
-    args   : "none",
-    returns: "string CSS style, or null"
 };
 
 
@@ -313,7 +253,7 @@ x.data.Text.renderDropdownDiv = function (parent_elmt, tooltip) {
     x.log.functionStart("renderDropdownDiv", this, arguments);
     div_elmt = parent_elmt.makeElement("div", "dropdown");
     div_elmt.makeDropdownIcon(this.nav_dropdown_icon, tooltip);
-    ul_elmt = div_elmt.makeDropdownUL(control);
+    ul_elmt = div_elmt.makeDropdownUL(this.getControl());
     return ul_elmt;
 };
 
