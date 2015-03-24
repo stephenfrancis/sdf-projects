@@ -149,12 +149,12 @@
 
 		<script type="text/javascript" src="/cdn/jquery-v1.7.2/jquery-1.7.2.min.js"> </script>
 		<script type="text/javascript" src="/cdn/twitter-bootstrap-v2.3.2/js/bootstrap.min.js"> </script>
-		<script type="text/javascript" src="base/x.js"> </script>
-		<script type="text/javascript" src="main.js"> </script>
-		<script type="text/javascript" src="style/client.js"> </script>
+		<script type="text/javascript" src="/cdn/requirejs-v2.1.15/require.min.js"> </script>
 		<script type="text/javascript">
 
-
+			require(["base/Base.js"], function (base) {
+				console.log(base.id);
+			});
 /*
 			var _gaq = _gaq || [];
 			_gaq.push(['_setAccount', 'UA-36505379-1']);
