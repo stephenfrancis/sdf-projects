@@ -139,9 +139,9 @@ $.fn.extend({
 
 });
 
+console.log("Loading style/client.js ... " + (typeof $.fn.makeElement));
 
-
-var y = {};
+y = {};
 
 y.splitParams = function (str) {
     "use strict";
@@ -159,7 +159,7 @@ y.splitParams = function (str) {
     return out;
 };
 
-y.session = x.ac.Session.clone({ user_id: "francis" });
+//y.session = x.ac.Session.clone({ user_id: "francis" });
 
 /*
 y.page = x.page.Page.clone({
@@ -172,6 +172,8 @@ y.page.sections.add({ id: "temp", type: "Section", title: "Wibble", text: "Wobbl
 
 $(document).ready(function () {
     "use strict";
+
+    console.log("Loading style/client.js ... inside document.ready()");
 
     $(document).on("click", ".css_cmd", function (event) {
         var bind_object = $(this).data("bind_object");
@@ -208,9 +210,15 @@ $(document).ready(function () {
 
     y.url_params = y.splitParams(window.location.search.substring(1));
 
-    var page_id = y.url_params.page_id || "x.sy.List.display";
+    console.log("Loading style/client.js ... y.url_params.page_id: " + y.url_params.page_id);
 
-    y.page = y.session.getPage(page_id, "pqrs", y.elements);
+    var page_id = y.url_params.page_id || "sy.List.display";
+    y.Page = require("../page/Page");
+    y.page = y.Page.getPage(page_id);
+
+    console.log("Loading style/client.js ... page: " + y.page);
+
+//    y.page = y.session.getPage(page_id, "pqrs", y.elements);
     y.page.render();
 });
 

@@ -18,7 +18,7 @@ x.ui.tree.createTree = function (parent_node, id) {
 x.ui.tree.createNode = function (parent_node, id, label, branch, moveable, deletable) {
     var node;
     if ($(".tree #" + id).length > 0) {
-        throw new Error("createTreeNode(): id already exists: " + id);
+        throw new Error("createNode(): id already exists: " + id);
     }
     node = this.addNode(parent_node, this.makeNewNode(id, label, branch, moveable, deletable));
     node.trigger('tree.create', [id, label, branch, moveable, deletable]);

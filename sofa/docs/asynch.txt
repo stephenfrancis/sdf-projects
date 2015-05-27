@@ -1,0 +1,117 @@
+
+
+Async Patterns
+
+
+Example
+
+User is Creating a new Job, and changes the Role drop-down...
+(i) requiring vr_rqmt.job_spec to be re-populated from ad_role.job_spec
+(ii) requiring ad_role_rate to be queried and the resulting rates applied
+
+
+Event Approach
+
+vr_rqmt.events.addListener("vr_rqmt_amend::role_id::change", function (field) {
+	var wait_token = page.getWaitToken();
+	field.owner.trans.getActiveRow("ad_role", field.get()).events.addListener("retrieved", function (row) {
+		field.owner.getField("job_spec").set(row.getField("job_spec").get());
+		wait_token.release();
+	});
+	// what about if the retrieved event never fires due to some error?
+});
+
+what about...
+
+vr_rqmt.events.addListener("vr_rqmt_amend::role_id::change", function (field) {
+	field.owner.trans.getActiveRow("ad_role", field.get(), page.getWaitToken()).events.addListener("retrieved", function (row) {
+		field.owner.getField("job_spec").set(row.getField("job_spec").get());
+	});
+});
+
+OR
+
+vr_rqmt.events.addListener("vr_rqmt_amend::role_id::change", function (field) {
+	var role_rcd = field.owner.trans.getActiveRow("ad_role", field.get();
+	page.callback(role_rcd, "retrieved", function () {
+		field.owner.getField("job_spec").set(row.getField("job_spec").get());
+	}, "update");			// "update" is the async phase within page
+});
+
+WHERE
+
+page.callback = function (obj, obj_event, funct, async_phase) {
+	var that = this,
+		wait_token = this.getWaitToken(async_phase);
+	obj.addListener(obj_event, function (arg) {
+		obj.funct(arg);
+		that.release(wait_token);
+	});
+};
+
+page.getWaitToken = function (async_phase) {
+	var that = this,
+		wait_token = {};
+
+	this.wait_tokens = this.wait_tokens || {};
+	this.wait_tokens[async_phase] = this.wait_tokens[async_phase] || [];
+	this.wait_tokens[async_phase].push(wait_token);
+
+	wait_token.release = function () {
+		that.wait_tokens[async_phase].remove(this);
+		if (that.wait_tokens[async_phase].length === 0) {
+			that.phaseDone[async_phase]();
+		}
+	};
+};
+
+page.release = function (wait_token) {
+	var that = this;
+	this.wait_tokens.forOwn(function (async_phase, wait_tokens) {
+		if (wait_tokens.remove(wait_token && wait_tokens.length === 0) {
+			that.phaseDone[async_phase]();
+		});
+	});
+};
+
+// in this model, an async method (e.g. getActiveRow) can take a wait_token object, which will then
+// be released once all the events have been fired - any of which might cause another wait object to be
+// created
+
+
+Promises Approach
+
+var promise = // some 'master promise' replacing the page update event
+
+if (rqmt_row.getField("role_id").isChangedSincePreviousUpdate()) {
+	var role_row = trans.getActiveRow("ad_role", field.get());
+	promise.then(role_row.promise);
+	promise.then(function (row) {
+		rqmt_row.getField("job_spec").set(row.getField("job_spec").get());
+	});
+}
+
+OR
+
+if (rqmt_row.getField("role_id").isChangedSincePreviousUpdate()) {
+	trans.getActiveRow("ad_role", field.get()).then(function () {
+		rqmt_row.getField("job_spec").set(row.getField("job_spec").get());
+	}, page, "update");
+}
+
+WHERE
+
+record.then = function (callback, async_obj, async_phase) {
+	var that = this,
+		wait_token;
+	if (async_obj) {
+		wait_token = async_obj.getWaitToken(async_phase);
+	}
+	this.promise.then(function () {
+		that.callback();
+		if (async_obj) {
+			async_obj.release(wait_token);
+		}
+	});
+};
+

@@ -13,7 +13,7 @@ x.remote.base = {
     log_level            : 4,
     database_url         : "http://other_apps:5984/fastdox/",
     replication_interval : 1000 * 60,
-    replication_continue : true,
+    replication_continue : false,
     ajax_timeout         : 60000,
 };
 

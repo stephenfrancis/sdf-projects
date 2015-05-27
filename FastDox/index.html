@@ -13,7 +13,6 @@
 		<link rel="stylesheet" type="text/css" href="/cdn/alohaeditor-v0.25.2/aloha/css/aloha.css" />
 		<style type="text/css">
 body						{ font-family: Arial; }
-.css_hide					{ display: none; }
 /*
 #css_message				{ margin-top: 6px; float: right; margin-right: 10px; text-align: right; }
 #buttons					{ margin-top: 6px; float: right; margin-right: 10px; text-align: right; width: 180px; }
@@ -71,11 +70,11 @@ a#status.replicating		{ color: blue; }
 
 			<div class="col-md-8" id="right_area">
 
-				<div id="doc_area" class="css_hide">
+				<div id="doc_area" class="hidden">
 					<h1>
 						<input type="text" id="doc_title" placeholder="Title" />
 						<button id="doc_delete" class="btn btn-sm btn-danger">Delete</button>
-						<span id="change_buttons" class="css_hide">
+						<span id="change_buttons" class="hidden">
 							<button id="doc_save"   class="btn btn-sm btn-primary">Save</button>
 							<button id="doc_cancel" class="btn btn-sm"            >Cancel</button>
 						</span>
@@ -112,13 +111,14 @@ a#status.replicating		{ color: blue; }
 			        Aloha.jQuery(textarea).aloha();
 			    });
 
-				$(document).on("tree.create", function (event, id, label, branch, draggable) {
-	    			console.log("index.html got event tree.create: " + event.type + ", " + id + ", " + label + ", " + branch + ", " + draggable);
+				$(document).on("tree.create", function (event, node_id, label, branch, draggable) {
+	    			console.log("index.html got event tree.create: " + event.type + ", " + node_id + ", " + label + ", " + branch + ", " + draggable);
+					x.store.setDocParent(node_id, "root", -1);
 				});
 
 				$(document).on("tree.move", function (event, node_id, new_parent_id, position) {
 					x.ui.using.log("index.html got move of: " + node_id + " to " + new_parent_id + " at " + position);
-					x.store.setDocParent(node_id, new_parent_id);
+					x.store.setDocParent(node_id, new_parent_id, position);
 				});
 
 
@@ -151,17 +151,17 @@ a#status.replicating		{ color: blue; }
 
 			$(document).on("keyup" , "#doc_title", function (event) {
 				if (x.ui.isCurrentDocModified()) {
-					$("#change_buttons").removeClass("css_hide");
+					$("#change_buttons").removeClass("hidden");
 				} else {
-					$("#change_buttons").   addClass("css_hide");
+					$("#change_buttons").   addClass("hidden");
 				}
 			});
 
 			$(document).on("keyup" , "#doc_content", function (event) {
 				if (x.ui.isCurrentDocModified()) {
-					$("#change_buttons").removeClass("css_hide");
+					$("#change_buttons").removeClass("hidden");
 				} else {
-					$("#change_buttons").   addClass("css_hide");
+					$("#change_buttons").   addClass("hidden");
 				}
 			});
 

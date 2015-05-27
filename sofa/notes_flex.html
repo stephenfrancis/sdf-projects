@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en"><!--  manifest="cache.manifest" -->
+	<head>
+		<title>NuNotes</title>
+		<meta charset="utf-8">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+		<meta name="description" content="">
+		<meta name="author" content="">
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8" /> 
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+		<link rel="stylesheet" type="text/css" href="/cdn/twitter-bootstrap-v3.1.1/css/bootstrap.min.css" media="screen" />
+<!--
+		<link rel="stylesheet" type="text/css" href="tree/tree.css" />
+		<link rel="stylesheet" type="text/css" href="/cdn/alohaeditor-v0.25.2/aloha/css/aloha.css" />
+-->
+		<style type="text/css">
+body						{ font-family: Arial; }
+/*
+#css_message				{ margin-top: 6px; float: right; margin-right: 10px; text-align: right; }
+#buttons					{ margin-top: 6px; float: right; margin-right: 10px; text-align: right; width: 180px; }
+*/
+a#status					{ font-size: 16pt; text-decoration: none; cursor: default; }
+a#status.online				{ color: green; }
+a#status.offline			{ color: red; }
+a#status.replicating		{ color: blue; }
+
+.info_block					{ font-family: monospace; font-size: 8pt; color: #bbb; }
+#list_pane tr[uuid]			{ cursor: pointer; }
+#doc_pane #doc_content		{
+								background-color: #FFFFFF; border: 1px solid black;
+								box-shadow: 0 1px 1px rgba(0, 0, 0, 0.075) inset;
+								transition: border 0.2s linear 0s, box-shadow 0.2s linear 0s;
+								padding: 4px; margin-top: 10px;
+							}
+
+.wrapper {
+  display: flex;
+  flex-flow: row wrap;
+}
+
+/* We tell all items to be 100% width */
+.header, .main, .nav, .left_pane, .right_pane, .footer {
+  flex: 1 100%;
+}
+
+/* We rely on source order for mobile-first approach
+ * in this case:
+ * 1. header
+ * 2. nav
+ * 3. main
+ * 4. aside
+ * 5. footer
+ */
+
+/* Medium screens */
+@media all and (min-width: 600px) {
+  /* We tell both sidebars to share a row */
+  .left_pane, .right_pane { flex: 1 auto; }
+}
+
+/* Large screens */
+@media all and (min-width: 800px) {
+  /* We invert order of first sidebar and main
+   * And tell the main element to take twice as much width as the other two sidebars 
+   */
+}
+		</style>
+	</head>
+	<body>
+		<div class="wrapper">
+			<header class="header">
+				<a class="navbar-brand" href="#">NuNotes</a>
+				<ul class="nav navbar-nav">
+					<li id="menu_create_folder"><a href="#">Create a new Folder</a></li>
+					<li id="menu_create_doc"   ><a href="#">Create a new Document</a></li>
+				</ul>
+				<ul class="nav navbar-nav pull-right">
+					<li id="notification" class="navbar-text"></li>
+					<li><a id="healthy">&#x25CF;</a></li>
+				</ul>
+			</header>
+			<div class="left_pane">
+			</div>
+			<div class="right_pane">
+			</div>
+			<footer class="footer">
+			Footer
+			</footer>
+		</div>
+
+
+		<script type="text/javascript" src="/cdn/jquery-v1.7.2/jquery-1.7.2.min.js"></script>
+		<script type="text/javascript" src="/cdn/twitter-bootstrap-v3.1.1/js/bootstrap.min.js"></script>
+		<script type="text/javascript" src="UINotes.js"> </script>
+
+		<script type="text/javascript">
+		        var textarea = $("#doc_pane #doc_content");
+			    Aloha.ready(function() {
+			        Aloha.jQuery(textarea).aloha();
+			    });
+
+			});
+
+	        Aloha = window.Aloha || {};
+	        Aloha.settings = Aloha.settings || {};
+	        Aloha.settings.locale = 'en';
+	        Aloha.settings.sidebar = { disabled: true };
+	        // Restore the global $ and jQuery variables of your project's jQuery
+	        Aloha.settings.jQuery = window.jQuery.noConflict(true);
+	        Aloha.settings.plugins = {
+	            load: "common/ui, common/format, common/list, common/link, common/paste, common/table, common/contenthandler"
+	        };
+	        Aloha.settings.contentHandler = {
+	            insertHtml: [ 'word', 'generic', 'oembed', 'sanitize' ],
+	            initEditable: [ 'sanitize' ],
+	            getContents: [ 'blockelement', 'sanitize', 'basic' ],
+	            sanitize: 'relaxed' // relaxed, restricted, basic,
+	        };
+		</script>
+	</body>
+</html>
