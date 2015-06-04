@@ -11,7 +11,10 @@ Some, we just write some content here...
 
 Or just write like this...
 
-|Not sure |if it also |supports
-|tables? |I guess we'll |find out with this?
+Okay, instead we lose the table,
+and format the content a different way...
+
+Not sure if it also supports tables?
+I guess we'll find out with this?
 
 Tada!
